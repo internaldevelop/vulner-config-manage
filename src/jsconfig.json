@@ -1,0 +1,7 @@
+{
+    "comment1": "experimentalDecorators used to be fixed warning: Experimental support for decorators is a feature that is subject to change in a future release. Set the experimentalDecorators option to remove this warning.",
+    "compilerOptions": {
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true
+    }
+}
