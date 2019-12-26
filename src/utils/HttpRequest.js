@@ -21,19 +21,15 @@ class HttpRequest {
         // 配合后端实现固定的 session id
         axios.defaults.withCredentials=true;
 
-        axios.get(GetMainServerRootUrl() + path, { params: params })
+        axios.get(GetMainServerRootUrl() + path, { params: params, headers: {'Authorization': 'Basic YW5kcm9pZDphbmRyb2lk'}})
             .then((response) => response.data)
             .then((data) => {
                 console.log('axios asyncGet data, return:');
                 console.log(data);//输出返回的数据
-                if (data.code === errorCode.ERROR_OK) {
+                if (data.access_token !== undefined || (data.code !== undefined && data.code === 'ERROR_OK')) {
                     callback(data);
-                } else if (data.code === errorCode.ERROR_NOT_DATA) {
-                    message.info('请求资源码:' + data.code + '  信息:' + data.error);
-                    if (!onlySuccess)
-                        callback(data);
                 } else {
-                    message.error('请求资源错误码:' + data.code + '  错误信息:' + data.error);
+                    //message.error('请求资源错误码:' + data.code + '  错误信息:' + data.error);
                     if (!onlySuccess)
                         callback(data); 
                 }
@@ -144,8 +140,8 @@ class HttpRequest {
             .then((data) => {
                 console.log('axios asyncPost data, return:');
                 console.log(data);//输出返回的数据
-                if (data.code !== errorCode.ERROR_OK) {
-                    message.error('请求资源错误码：' + data.code + '  错误信息：' + data.error);
+                if (data.code !== 'ERROR_OK') {
+                    //message.error('请求资源错误码：' + data.code + '  错误信息：' + data.error);
                     if (!onlySuccess)
                         callback(data);
                 } else {

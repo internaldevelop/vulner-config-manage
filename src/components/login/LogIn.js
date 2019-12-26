@@ -15,7 +15,6 @@ import withStyles from '@material-ui/core/styles/withStyles';
 import Link from '@material-ui/core/Link';
 import LoginBGImage from '../../resources/image/login_bg.jpg'
 import { observer, inject } from 'mobx-react'
-// import UserStore from '../../main/store/UserStore';
 import { withRouter } from 'react-router-dom'
 import { GetSystemType } from "../../global/environment"
 
@@ -23,7 +22,6 @@ import { Row, Col, message, Form } from 'antd'
 
 import { randomNum } from '../../utils/tools'
 import HttpRequest from '../../utils/HttpRequest';
-import { errorCode } from '../../global/error';
 
 const styles = theme => ({
     main: {
@@ -112,6 +110,7 @@ class LogIn extends React.Component {
             verifyCode: '',
             showVerifyError: false,
             verifyError: '',
+            access_token: '',
         };
 
         this.handleSubmit = this.handleSubmit.bind(this);
@@ -169,63 +168,68 @@ class LogIn extends React.Component {
             const { account } = this.state;
             let subject = '账号' + account + '密码已锁定';
             let content = '账号' + account + '在主站系统自动化配置检测工具系统中的密码已被锁定，请解锁其密码';
-            HttpRequest.asyncGet(this.sendMailCB, '/emails/send', {subject, content, mailToManagerAddress});
-        } 
+            HttpRequest.asyncGet(this.sendMailCB, '/emails/send', { subject, content, mailToManagerAddress });
+        }
     }
 
     getSystemConfig() {
         HttpRequest.asyncGet(this.getSystemConfigCB, '/system-config/all');
     }
 
-    setUserCB = (result) => {
-        //
-    }
-
-    verifyPasswordCB = (data) => {
-        const userStore = this.props.userStore;
-        if (data.code === errorCode.ERROR_OK) {
-            // 密码校验成功，保存登录用户
-            const { account, password } = this.state;
+    getAccountInfoCB = (data) => {
+        // 密码校验成功，保存登录用户
+        if (data.code === 'ERROR_OK') {
+            const { account, password, access_token } = this.state;
+            const userStore = this.props.userStore;
             userStore.setLoginUser({
                 isLogin: true,
                 account,
                 userUuid: data.payload.user_uuid,
                 password,
-                userGroup: data.payload.user_group,
+                access_token,
+                //userGroup: data.payload.user_group,
                 email: data.payload.email,
             });
-
-            // 如果是GetSystemType == 4 登录成功后设置userUiid给python后台
-            if (GetSystemType() === 4) {
-                HttpRequest.asyncGet2(this.setUserCB, '/set_user', { uuid: data.payload.user_uuid });
-            }
-
+    
             let remember = document.getElementById('remember').checked;
             if (remember)
                 userStore.saveLoginUser(15);
-
+    
             // 跳转到home页面
             let history = this.props.history;
             history.push('/home');
-        } else if (data.code === errorCode.ERROR_USER_PASSWORD_LOCKED) {
+        } else {
+            this.setState({
+                showVerifyError: true,
+                verifyError: data.error,
+            });
+        }
+    }
+
+    verifyPasswordCB = (data) => {
+        const userStore = this.props.userStore;
+        if (data.access_token !== undefined) {
+            this.setState({access_token: data.access_token});
+            HttpRequest.asyncGet(this.getAccountInfoCB, '/account_manage/self', { access_token: data.access_token }, false);
+        } else if (data.code === 'ERROR_USER_PASSWORD_LOCKED') {
             // 密码已锁定
             this.setState({
                 showVerifyError: true,
-                verifyError: '密码已锁定，请联系管理员解锁密码',
+                verifyError: data.error,
             });
             // 获取系统配置确认是否需要发邮件给管理员解锁密码
-            this.getSystemConfig();
-        } else if (data.code === errorCode.ERROR_INVALID_PASSWORD) {
+            //this.getSystemConfig();
+        } else if (data.code === 'ERROR_INVALID_PASSWORD') {
             // 密码校验失败，提示剩余尝试次数
             this.setState({
                 showVerifyError: true,
-                verifyError: '密码错误，您还有 ' + data.payload.rat + ' 次尝试机会',
+                verifyError: data.payload.info,
             });
-        } else if (data.code === errorCode.ERROR_USER_NOT_FOUND) {
+        } else if (data.code === 'ERROR_ACCOUNT_NOT_EXIST') {
             // 系统里没有该用户，提示注册用户
             this.setState({
                 showVerifyError: true,
-                verifyError: '没有找到该用户，请注册账户，并联系管理员激活账户',
+                verifyError: data.error,
             });
         }
     }
@@ -242,7 +246,7 @@ class LogIn extends React.Component {
 
         const { account, password } = this.state;
         this.props.form.validateFields((err, values) => {
-            HttpRequest.asyncPost(this.verifyPasswordCB, '/users/verify-pwd', { account, password }, false);
+            HttpRequest.asyncGet(this.verifyPasswordCB, '/oauth/token', { grant_type: 'password', username: account, password }, false);
         });
     }
 
@@ -308,8 +312,8 @@ class LogIn extends React.Component {
                     </Typography>
                         <form onSubmit={this.handleSubmit.bind(this)} className={classes.form}>
                             <FormControl margin="normal" required fullWidth>
-                                <InputLabel htmlFor="email">账号</InputLabel>
-                                <Input id="email" name="email" autoComplete="email" autoFocus value={this.state.account} onChange={this.handleAccountChange.bind(this)} />
+                                <InputLabel htmlFor="account">账号</InputLabel>
+                                <Input id="account" name="account" autoComplete="email" autoFocus value={this.state.account} onChange={this.handleAccountChange.bind(this)} />
                             </FormControl>
                             <FormControl margin="normal" required fullWidth>
                                 <InputLabel htmlFor="password">密码</InputLabel>
@@ -349,14 +353,6 @@ class LogIn extends React.Component {
                             </Link>
                             </Typography>
                         </form>
-                        {/* <React.Fragment>
-                        <Typography variant="body2" align="center">
-                            {'没有账号？  '}
-                            <Link href="./signup" align="center" underline="always">
-                                点击这里注册
-                            </Link>
-                        </Typography>
-                    </React.Fragment> */}
                     </Paper>
                 </Paper>
             </div>

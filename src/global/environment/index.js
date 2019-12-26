@@ -83,7 +83,7 @@ export function GetMainServerRootUrl() {
     let protocol = _getHttpProtocol();
     let url = global.myEnvironConfig.mainServerUrl;
     let port = global.myEnvironConfig.mainServerPort;
-    return protocol + '://' + url + ':' + port + '/api';
+    return protocol + '://' + url + ':' + port + '/unified-auth';
 }
 
 export function GetEdbServerRootUrl() {

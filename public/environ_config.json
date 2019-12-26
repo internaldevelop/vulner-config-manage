@@ -9,19 +9,14 @@
         "终端漏洞利用工具"
     ],
     "ssl": false,
-    "mainServerPort": "8090",
+    "mainServerPort": "10110",
     "agentServerPort": "8191",
     "edbServerPort": "10091",
-    "mainServerUrl": "172.16.113.39",
+    "mainServerUrl": "localhost",
     "edbServerUrl": "192.168.182.88",
     "urlDescSplitter": "===================================================",
     "urlDesc1": "本地： localhost",
-    "urlDesc2": "WYT 虚拟机： 192.168.182.88",
-    "urlDesc3": "TQ 直连虚拟机： 192.168.1.70",
-    "urlDesc4": "TQ 本机： 192.168.1.60",
-    "urlDesc5": "TQ wifi虚拟机： 172.16.113.39",
-    "urlDesc6": "信通所云服务器： 172.16.60.5",
-    "urlDesc7": "域名： ytwei.club",
+    "urlDesc2": "信通所云服务器： 172.16.60.5",
     "portDescSplitter": "===================================================",
     "portDesc": "ssl: 12001, 12002, 12003; no-ssl: 8090, 8191, 10091"
 }

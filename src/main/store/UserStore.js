@@ -17,6 +17,7 @@ const LoadUserLoginInfo = () => {
             account: '',
             userUuid: '',
             password: '',
+            access_token: '',
             expire: '',
             userGroup: userType.TYPE_NORMAL_USER,
             email: '',
@@ -32,6 +33,7 @@ class UserStore {
         account: '',
         userUuid: '',
         password: '',
+        access_token: '',
         expire: '',
         userGroup: userType.TYPE_NORMAL_USER,
         email: '',
@@ -46,6 +48,7 @@ class UserStore {
             password: this.loginUser.password,
             expire: GetExpireTimeGMTStr(expireDays),
             email: this.loginUser.email,
+            access_token: this.loginUser.access_token,
         });
         SetCookieExpireDays(loginInfoName, info, expireDays);
     }
