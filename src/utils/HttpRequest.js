@@ -155,6 +155,38 @@ class HttpRequest {
             })
     }
 
+        /**
+     * 
+     * @param {*} callback 回调函数
+     * @param {*} path 接口相对路径
+     * @param {*} params post 请求的参数
+     * @param {*} onlySuccess true：只有成功(ERROR_OK) 时，通过回调函数返回 data
+     *                        false: 不管成功与否，都通过回调函数返回 data
+     */
+    asyncDelete(callback, path, params, onlySuccess = true) {
+        // 配合后端实现固定的 session id
+        axios.defaults.withCredentials=true;
+
+        axios.delete(GetMainServerRootUrl() + path, { params: params })
+            .then((response) => response.data)
+            .then((data) => {
+                console.log('axios asyncPost data, return:');
+                console.log(data);//输出返回的数据
+                if (data.code !== 'ERROR_OK') {
+                    //message.error('请求资源错误码：' + data.code + '  错误信息：' + data.error);
+                    if (!onlySuccess)
+                        callback(data);
+                } else {
+                    callback(data);
+                }
+            })
+            .catch(error => {
+                console.log('axios catch error:');
+                console.log(error);
+                message.error(eng2chn(error.message));
+            })
+    }
+
     /**
      * 
      * @param {*} callback 回调函数

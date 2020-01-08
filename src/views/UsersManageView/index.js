@@ -62,7 +62,8 @@ class UsersManageView extends React.Component {
 
     onDelete = (event, index) => {
         const { users } = this.state;
-        HttpRequest.asyncPost(this.deleteUserCB, '/users/remove', { uuid: users[index].uuid });
+        const userStore = this.props.userStore;
+        HttpRequest.asyncPost(this.deleteUserCB, '/unified-auth/account_manage/delete', { access_token: userStore.loginUser.access_token, account_uuid: users[index].uuid });
     }
 
     generateUserList(users) {
@@ -77,9 +78,9 @@ class UsersManageView extends React.Component {
                 index: i,
                 title: users[i].name,
                 avatar: 'https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png',
-                description: '在线，有效期截止至2020年12月1日',
-                content: '账号：' + users[i].account + '地址：' + users[i].address + '电话：' + users[i].phone,
-                user_group: users[i].user_group,
+                description: '在线，有效期截止至2021年12月1日',
+                content: '昵称：' + users[i].alias + ' 电话：' + users[i].mobile,
+                //user_group: users[i].user_group,
             })
         }
         return listData;
@@ -95,7 +96,8 @@ class UsersManageView extends React.Component {
     }
 
     getUsers() {
-        HttpRequest.asyncGet(this.getUsersCB, '/users/all');
+        const userStore = this.props.userStore;
+        HttpRequest.asyncGet(this.getUsersCB, '/unified-auth/account_manage/all', { access_token: userStore.loginUser.access_token });
     }
 
     userListBox() {
@@ -153,7 +155,7 @@ class UsersManageView extends React.Component {
         // let user = users[selectedAccID];
         return (
             <div>
-                <Skeleton loading={!userStore.isAdminUser} active avatar>
+                <Skeleton loading={false} active avatar>
                     {
                         usersDataReady && selectedAccID >= 0 &&
                         <Row>

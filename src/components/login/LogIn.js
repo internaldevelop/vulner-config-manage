@@ -105,7 +105,7 @@ class LogIn extends React.Component {
         const userStore = this.props.userStore;
 
         this.state = {
-            account: '',
+            name: '',
             password: '',
             verifyCode: '',
             showVerifyError: false,
@@ -123,7 +123,7 @@ class LogIn extends React.Component {
         userStore.initLoginUser();
         if (!userStore.isUserExpired) {
             this.setState({
-                account: userStore.loginUser.account,
+                name: userStore.loginUser.name,
                 password: userStore.loginUser.password,
             });
         }
@@ -147,44 +147,44 @@ class LogIn extends React.Component {
         return true;
     }
 
-    getSystemConfigCB = (data) => {
-        // 检查响应的payload数据是数组类型
-        if (!(data.payload instanceof Array))
-            return;
+    // getSystemConfigCB = (data) => {
+    //     // 检查响应的payload数据是数组类型
+    //     if (!(data.payload instanceof Array))
+    //         return;
 
-        let mailToManagerAddress = '';
-        let mailToManagerOnOff = '';
-        for (let config of data.payload) {
-            let name = config.name;
-            if (name !== '') {
-                if (name === 'mail-to-manager-address') {
-                    mailToManagerAddress = config.value;
-                } else if (name === 'mail-to-manager-on-off') {
-                    mailToManagerOnOff = config.value;
-                }
-            }
-        }
-        if (mailToManagerOnOff === 'on') {
-            const { account } = this.state;
-            let subject = '账号' + account + '密码已锁定';
-            let content = '账号' + account + '在主站系统自动化配置检测工具系统中的密码已被锁定，请解锁其密码';
-            HttpRequest.asyncGet(this.sendMailCB, '/emails/send', { subject, content, mailToManagerAddress });
-        }
-    }
+    //     let mailToManagerAddress = '';
+    //     let mailToManagerOnOff = '';
+    //     for (let config of data.payload) {
+    //         let name = config.name;
+    //         if (name !== '') {
+    //             if (name === 'mail-to-manager-address') {
+    //                 mailToManagerAddress = config.value;
+    //             } else if (name === 'mail-to-manager-on-off') {
+    //                 mailToManagerOnOff = config.value;
+    //             }
+    //         }
+    //     }
+    //     if (mailToManagerOnOff === 'on') {
+    //         const { name } = this.state;
+    //         let subject = '账号' + name + '密码已锁定';
+    //         let content = '账号' + name + '在主站系统自动化配置检测工具系统中的密码已被锁定，请解锁其密码';
+    //         HttpRequest.asyncGet(this.sendMailCB, '/emails/send', { subject, content, mailToManagerAddress });
+    //     }
+    // }
 
-    getSystemConfig() {
-        HttpRequest.asyncGet(this.getSystemConfigCB, '/system-config/all');
-    }
+    // getSystemConfig() {
+    //     HttpRequest.asyncGet(this.getSystemConfigCB, '/system-config/all');
+    // }
 
     getAccountInfoCB = (data) => {
         // 密码校验成功，保存登录用户
         if (data.code === 'ERROR_OK') {
-            const { account, password, access_token } = this.state;
+            const { name, password, access_token } = this.state;
             const userStore = this.props.userStore;
             userStore.setLoginUser({
                 isLogin: true,
-                account,
-                userUuid: data.payload.user_uuid,
+                name,
+                uuid: data.payload.uuid,
                 password,
                 access_token,
                 //userGroup: data.payload.user_group,
@@ -210,7 +210,7 @@ class LogIn extends React.Component {
         const userStore = this.props.userStore;
         if (data.access_token !== undefined) {
             this.setState({access_token: data.access_token});
-            HttpRequest.asyncGet(this.getAccountInfoCB, '/account_manage/self', { access_token: data.access_token }, false);
+            HttpRequest.asyncGet(this.getAccountInfoCB, '/unified-auth/account_manage/self', { access_token: data.access_token }, false);
         } else if (data.code === 'ERROR_USER_PASSWORD_LOCKED') {
             // 密码已锁定
             this.setState({
@@ -244,14 +244,14 @@ class LogIn extends React.Component {
         if (this.checkVerifyCode() !== true)
             return;
 
-        const { account, password } = this.state;
+        const { name, password } = this.state;
         this.props.form.validateFields((err, values) => {
-            HttpRequest.asyncGet(this.verifyPasswordCB, '/oauth/token', { grant_type: 'password', username: account, password }, false);
+            HttpRequest.asyncGet(this.verifyPasswordCB, '/unified-auth/oauth/token', { grant_type: 'password', username: name, password }, false);
         });
     }
 
     handleAccountChange = event => {
-        this.setState({ account: event.target.value });
+        this.setState({ name: event.target.value });
     }
 
     handlePasswordChange = event => {
@@ -313,7 +313,7 @@ class LogIn extends React.Component {
                         <form onSubmit={this.handleSubmit.bind(this)} className={classes.form}>
                             <FormControl margin="normal" required fullWidth>
                                 <InputLabel htmlFor="account">账号</InputLabel>
-                                <Input id="account" name="account" autoComplete="email" autoFocus value={this.state.account} onChange={this.handleAccountChange.bind(this)} />
+                                <Input id="account" name="account" autoComplete="email" autoFocus value={this.state.name} onChange={this.handleAccountChange.bind(this)} />
                             </FormControl>
                             <FormControl margin="normal" required fullWidth>
                                 <InputLabel htmlFor="password">密码</InputLabel>

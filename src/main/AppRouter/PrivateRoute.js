@@ -41,7 +41,7 @@ class PrivateRoute extends React.Component {
             userStore.setLoginUser({
                 isLogin: true,
                 account,
-                userUuid: data.payload.user_uuid,
+                uuid: data.payload.user_uuid,
                 password,
                 userGroup: data.payload.user_group,
                 email: data.payload.email,

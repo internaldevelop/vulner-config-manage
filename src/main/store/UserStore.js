@@ -14,8 +14,8 @@ const LoadUserLoginInfo = () => {
 
     if (IsEmptyString(login)) {
         return ({
-            account: '',
-            userUuid: '',
+            name: '',
+            uuid: '',
             password: '',
             access_token: '',
             expire: '',
@@ -27,11 +27,11 @@ const LoadUserLoginInfo = () => {
     return value;
 };
 
-class UserStore {
+export class UserStore {
     @observable loginUser = {
         isLogin: false,
-        account: '',
-        userUuid: '',
+        name: '',
+        uuid: '',
         password: '',
         access_token: '',
         expire: '',
@@ -44,7 +44,7 @@ class UserStore {
     @action saveLoginUser = (expireDays) => {
         let info = JSON.stringify({
             account: this.loginUser.account,
-            userUuid: this.loginUser.uuid,
+            uuid: this.loginUser.uuid,
             password: this.loginUser.password,
             expire: GetExpireTimeGMTStr(expireDays),
             email: this.loginUser.email,

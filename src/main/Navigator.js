@@ -4,6 +4,14 @@ import { GetSystemType } from "../global/environment"
 
 const hostMenus = [
     {
+        title: '固件分析',
+        icon: 'control',
+        key: '/home/firmware-analyze/',
+        subs: [
+            { key: '/home/firmware-analyze/fetch', title: '固件收集', icon: 'download', },
+        ]
+    },
+    {
         title: '日志管理',
         icon: 'read',
         key: '/home/log-manage',

@@ -9,7 +9,7 @@ import UsersManageView from '../views/UsersManageView'
 import UserInfoView from '../views/UsersManageView/UserInfoView'
 import AboutView from '../views/AboutView'
 import AssetManageView from '../views/AssetManageView';
-
+import FirmwareFetchView from '../views/FirmwareFetchView';
 
 @withRouter
 class ContentMain extends React.Component {
@@ -29,6 +29,8 @@ class ContentMain extends React.Component {
         <PrivateRoute exact path='/home/sysadmin/users' component={UsersManageView} />
         <PrivateRoute exact path='/home/sysadmin/personal' component={UserInfoView} />
         <PrivateRoute exact path='/home/sysadmin/assets' component={AssetManageView} />
+
+        <PrivateRoute exact path='/home/firmware-analyze/fetch' component={FirmwareFetchView} />
 
         <PrivateRoute exact path='/home/about' component={AboutView} />
 

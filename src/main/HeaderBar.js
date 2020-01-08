@@ -92,8 +92,8 @@ class HeaderBar extends React.Component {
   logoutCB = (data) => {
   }
   logout = () => {
-    const { userUuid } = this.props.userStore.loginUser;
-    HttpRequest.asyncGet(this.logoutCB, '/users/logout', {user_uuid: userUuid});
+    const { access_token, uuid } = this.props.userStore.loginUser;
+    HttpRequest.asyncDelete(this.logoutCB, '/unified-auth/account_auth/exit', {access_token, uuid});
     // this.props.appStore.toggleLogin(false)
     // this.props.history.push(this.props.location.pathname)
     const userStore = this.props.userStore;

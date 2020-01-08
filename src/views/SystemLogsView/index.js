@@ -63,7 +63,9 @@ class SystemLogsView extends React.Component {
     }
 
     querySystemLogs = () => {
-        return HttpRequest.asyncGet(this.querySystemLogsCB, '/system-logs/all');
+        // TODO, 用户名和用户名称需要联合查询用户表，当前接口没有此信息
+        // TODO, 后续需要实现分页功能
+        return HttpRequest.asyncGet(this.querySystemLogsCB, '/system-log/sys_log/get', { caller: 'fw analyze back-end server', title: 'echoErrorCode', offset: 1, count: 10});
     }
 
     logTypeArray() {

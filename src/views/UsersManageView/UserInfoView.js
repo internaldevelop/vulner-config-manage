@@ -35,8 +35,15 @@ class UserInfoView extends React.Component {
 
     getLoginUserUuid() {
         const userStore = this.props.userStore;
-        return userStore.loginUser.userUuid;
+        return userStore.loginUser.uuid;
         // return '4bac0683-a076-41ba-a12b-ba4078f52dac';
+    }
+
+    getUserInfo () {
+        const userStore = this.props.userStore;
+        this.setState({
+            userDataReady: true,
+        });
     }
 
     getLoginUserCB = (data) => {
@@ -48,7 +55,9 @@ class UserInfoView extends React.Component {
 
     getLoginUser() {
         let userUuid = this.getLoginUserUuid();
-        HttpRequest.asyncGet(this.getLoginUserCB, '/users/user-by-uuid', { uuid: userUuid });
+        // TODO 登录的时候用户信息已经存到userStore里面，直接从userStore获取数据，目前根据uuid取用户信息接口暂时没有
+        this.getUserInfo();
+        //HttpRequest.asyncGet(this.getLoginUserCB, '/users/user-by-uuid', { uuid: userUuid });
     }
 
     render() {
@@ -57,10 +66,10 @@ class UserInfoView extends React.Component {
         return (
             <div>
                 {
-                    userDataReady &&
+                    //userDataReady &&
                     <Row>
                         <Col span={16} offset={4}>
-                            <UserCard uuid={user.uuid} manage={0} />
+                            <UserCard uuid={userStore.loginUser.uuid} manage={0} />
                         </Col>
                     </Row>
                 }
