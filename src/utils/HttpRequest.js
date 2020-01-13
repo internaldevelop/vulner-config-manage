@@ -9,6 +9,11 @@ import { eng2chn } from '../utils/StringUtils'
 
 
 class HttpRequest {
+    
+    testNoAuthGet() {
+        this.asyncGet(this.testCllBack, '/unified-auth/system/run_status', { token: false });
+    }
+
     /**
      * 
      * @param {*} callback 回调函数

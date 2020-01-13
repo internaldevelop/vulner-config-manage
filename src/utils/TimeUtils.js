@@ -5,7 +5,7 @@ export function IsNowExpired(expire) {
 
 export function GetExpireTimeGMTStr(expireDays) {
     var exp = new Date();
-    exp.setTime(exp.getTime() + expireDays*24*60*60*1000);
+    exp.setTime(exp.getTime() + expireDays * 24 * 60 * 60 * 1000);
     return exp.toGMTString();
 }
 
@@ -20,18 +20,66 @@ export function GetNowTimeMyStr() {
 }
 
 // 输出时间格式为：yyyy-MM-dd HH-mm-ss
-export function MyFormatTime(inputTime) {  
+export function MyFormatTime(inputTime) {
     var date = new Date(inputTime);
-    var y = date.getFullYear();  
-    var m = date.getMonth() + 1;  
-    m = m < 10 ? ('0' + m) : m;  
-    var d = date.getDate();  
-    d = d < 10 ? ('0' + d) : d;  
+    var y = date.getFullYear();
+    var m = date.getMonth() + 1;
+    m = m < 10 ? ('0' + m) : m;
+    var d = date.getDate();
+    d = d < 10 ? ('0' + d) : d;
     var h = date.getHours();
     h = h < 10 ? ('0' + h) : h;
     var minute = date.getMinutes();
     var second = date.getSeconds();
-    minute = minute < 10 ? ('0' + minute) : minute;  
-    second = second < 10 ? ('0' + second) : second; 
-    return y + '-' + m + '-' + d+' '+h+':'+minute+':'+second;  
+    minute = minute < 10 ? ('0' + minute) : minute;
+    second = second < 10 ? ('0' + second) : second;
+    return y + '-' + m + '-' + d + ' ' + h + ':' + minute + ':' + second;
 }
+
+class TimeUtils {
+    IsNowExpired(expire) {
+        let currentTime = new Date();
+        return (currentTime.getTime() > expire.getTime());
+    }
+
+    GetExpireTimeGMTStr(expireDays) {
+        var exp = new Date();
+        exp.setTime(exp.getTime() + expireDays * 24 * 60 * 60 * 1000);
+        return exp.toGMTString();
+    }
+
+    GetNowTimeGMTStr() {
+        var now = new Date();
+        return now.toGMTString();
+    }
+
+    GetNowTimeMyStr() {
+        var now = new Date();
+        return this.MyFormatTime(now);
+    }
+
+    // 输出时间格式为：yyyy-MM-dd HH-mm-ss
+    MyFormatTime(inputTime) {
+        var date = new Date(inputTime);
+        var y = date.getFullYear();
+        var m = date.getMonth() + 1;
+        m = m < 10 ? ('0' + m) : m;
+        var d = date.getDate();
+        d = d < 10 ? ('0' + d) : d;
+        var h = date.getHours();
+        h = h < 10 ? ('0' + h) : h;
+        var minute = date.getMinutes();
+        var second = date.getSeconds();
+        minute = minute < 10 ? ('0' + minute) : minute;
+        second = second < 10 ? ('0' + second) : second;
+        return y + '-' + m + '-' + d + ' ' + h + ':' + minute + ':' + second;
+    }
+
+    sleep(ms) {
+        return new Promise(resolve =>
+            setTimeout(resolve, ms)
+        )
+    }
+}
+
+export default new TimeUtils()

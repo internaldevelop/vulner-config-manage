@@ -22,6 +22,8 @@ import { Row, Col, message, Form } from 'antd'
 
 import { randomNum } from '../../utils/tools'
 import HttpRequest from '../../utils/HttpRequest';
+import RestReq from '../../utils/RestReq';
+import TimeUtils from '../../utils/TimeUtils';
 
 const styles = theme => ({
     main: {
@@ -190,11 +192,11 @@ class LogIn extends React.Component {
                 //userGroup: data.payload.user_group,
                 email: data.payload.email,
             });
-    
+
             let remember = document.getElementById('remember').checked;
             if (remember)
                 userStore.saveLoginUser(15);
-    
+
             // 跳转到home页面
             let history = this.props.history;
             history.push('/home');
@@ -209,7 +211,7 @@ class LogIn extends React.Component {
     verifyPasswordCB = (data) => {
         const userStore = this.props.userStore;
         if (data.access_token !== undefined) {
-            this.setState({access_token: data.access_token});
+            this.setState({ access_token: data.access_token });
             HttpRequest.asyncGet(this.getAccountInfoCB, '/unified-auth/account_manage/self', { access_token: data.access_token }, false);
         } else if (data.code === 'ERROR_USER_PASSWORD_LOCKED') {
             // 密码已锁定
@@ -240,6 +242,24 @@ class LogIn extends React.Component {
 
     handleSubmit = event => {
         event.preventDefault();
+
+        // let rest = RestReq;
+        // RestReq.testNoAuthGet();
+        // TimeUtils.sleep(1000)
+        //     .then(() => { 
+        //         RestReq.testAuthGet(); 
+        //         return TimeUtils.sleep(1000); 
+        //     })
+        //     .then(() => { 
+        //         RestReq.testAuthPost(); 
+        //         return TimeUtils.sleep(1000); 
+        //     })
+        //     .then(() => { 
+        //         RestReq.testAuthDelete(); 
+        //         return TimeUtils.sleep(1000); 
+        //     });
+        // return;
+
         // 检查验证码是否正确，错误提示
         if (this.checkVerifyCode() !== true)
             return;
