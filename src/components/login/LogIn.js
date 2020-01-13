@@ -23,7 +23,6 @@ import { Row, Col, message, Form } from 'antd'
 import { randomNum } from '../../utils/tools'
 import HttpRequest from '../../utils/HttpRequest';
 import RestReq from '../../utils/RestReq';
-import TimeUtils from '../../utils/TimeUtils';
 
 const styles = theme => ({
     main: {
@@ -243,21 +242,7 @@ class LogIn extends React.Component {
     handleSubmit = event => {
         event.preventDefault();
 
-        // let rest = RestReq;
-        // RestReq.testNoAuthGet();
-        // TimeUtils.sleep(1000)
-        //     .then(() => { 
-        //         RestReq.testAuthGet(); 
-        //         return TimeUtils.sleep(1000); 
-        //     })
-        //     .then(() => { 
-        //         RestReq.testAuthPost(); 
-        //         return TimeUtils.sleep(1000); 
-        //     })
-        //     .then(() => { 
-        //         RestReq.testAuthDelete(); 
-        //         return TimeUtils.sleep(1000); 
-        //     });
+        // RestReq.testRestReq();
         // return;
 
         // 检查验证码是否正确，错误提示
