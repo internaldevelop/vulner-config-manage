@@ -10,7 +10,7 @@ import { GetMainViewHeight, GetMainViewMinHeight, GetMainViewMinWidth } from '..
 import EllipsisText from '../../components/widgets/EllipsisText';
 import { GetTableColumnFilters } from '../../utils/tools'
 import { DeepClone, DeepCopy } from '../../utils/ObjUtils'
-import HttpRequest from '../../utils/HttpRequest';
+import RestReq from '../../utils/RestReq';
 
 const styles = theme => ({
     iconButton: {
@@ -49,23 +49,39 @@ class SystemLogsView extends React.Component {
         this.setState({ scrollHeight: GetMainViewHeight() });
     }
 
+    getAccountName(item, accountInfo) {
+        if (accountInfo !== undefined ) {
+            try{
+                let infoArrays = JSON.parse(accountInfo);
+                item.account_name = infoArrays.account_name;
+                item.account_alias = infoArrays.account_alias;
+            }catch(e) {
+                console.log('error：'+ e);
+                return false;
+            }
+        }
+    }
+
     querySystemLogsCB = (data) => {
-        let logs = data.payload.map((log, index) => {
-            let item = DeepClone(log);
-            // antd 表格的 key 属性复用 index
-            // 表格中索引列（后台接口返回数据中没有此属性）
-            item.index = index + 1;
-            item.key = index + 1;
-            item.level = this.getLogLevelMeaning(item.type);
-            return item;
-        });
-        this.setState({ resultData: logs });
+        if (data.payload.logs !== undefined) {
+            let logs = data.payload.logs.map((log, index) => {
+                let item = DeepClone(log);
+                // antd 表格的 key 属性复用 index
+                // 表格中索引列（后台接口返回数据中没有此属性）
+                item.index = index + 1;
+                item.key = index + 1;
+                item.level = this.getLogLevelMeaning(item.type);
+                this.getAccountName(item, log.account_info);
+                return item;
+            });
+            this.setState({ resultData: logs });
+        }
     }
 
     querySystemLogs = () => {
         // TODO, 用户名和用户名称需要联合查询用户表，当前接口没有此信息
         // TODO, 后续需要实现分页功能
-        return HttpRequest.asyncGet(this.querySystemLogsCB, '/system-log/sys_log/get', { caller: 'fw analyze back-end server', title: 'echoErrorCode', offset: 1, count: 10});
+        return RestReq.asyncGet(this.querySystemLogsCB, '/system-log/sys_log/search_by_filter', { offset: 0, count: 100}, { token: false });
     }
 
     logTypeArray() {
@@ -128,7 +144,7 @@ class SystemLogsView extends React.Component {
         const { resultData } = this.state;
         const tableColumns = [
             {
-                title: '序号', dataIndex: 'index', key: 'key', width: 50,
+                title: '序号', dataIndex: 'index', key: 'key', width: 80,
             },
             {
                 title: '级别', dataIndex: 'level', width: 80,
@@ -157,18 +173,18 @@ class SystemLogsView extends React.Component {
                 render: content => <EllipsisText content={content} width={260 * ratio} />,
             },
             {
-                title: '用户名', dataIndex: 'create_user_name', width: 100,
+                title: '用户名', dataIndex: 'account_alias', width: 100,
                 // 添加过滤器用于审计
-                // filters: GetTableColumnFilters(resultData, "create_user_name"),
-                // filterMultiple: true,
-                // onFilter: (value, record) => record.create_user_name.indexOf(value) === 0,
+                filters: GetTableColumnFilters(resultData, "account_alias"),
+                filterMultiple: true,
+                onFilter: (value, record) => record.account_alias.indexOf(value) === 0,
             },
             {
-                title: '用户账号', dataIndex: 'create_user_account', width: 100,
+                title: '用户账号', dataIndex: 'account_name', width: 100,
                 // 添加过滤器用于审计
-                // filters: GetTableColumnFilters(resultData, "create_user_account"),
-                // filterMultiple: true,
-                // onFilter: (value, record) => record.create_user_account.indexOf(value) === 0,
+                filters: GetTableColumnFilters(resultData, "account_name"),
+                filterMultiple: true,
+                onFilter: (value, record) => record.account_name.indexOf(value) === 0,
             },
             {
                 title: '时间', dataIndex: 'create_time', width: 130,

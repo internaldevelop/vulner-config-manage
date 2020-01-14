@@ -1,11 +1,12 @@
 import React from 'react'
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
+import OutlinedInput from '@material-ui/core/OutlinedInput';
 import { Card, Form, Select, Input, Tooltip, Icon, message, Row, Col } from 'antd';
 import { observer, inject } from 'mobx-react'
 
 import ChangePwdDlg from '../../components/ChangePwdDlg';
-import HttpRequest from '../../utils/HttpRequest';
+import RestReq from '../../utils/RestReq';
 import { errorCode } from '../../global/error';
 
 const FormItem = Form.Item;
@@ -62,7 +63,7 @@ class UserCard extends React.Component {
 
     getUsers() {
         const userStore = this.props.userStore;
-        HttpRequest.asyncGet(this.getUsersCB, '/unified-auth/account_manage/all', { access_token: userStore.loginUser.access_token });
+        RestReq.asyncGet(this.getUsersCB, '/unified-auth/account_manage/all', { access_token: userStore.loginUser.access_token });
     }
 
     fetchUserCB = (data) => {
@@ -72,7 +73,7 @@ class UserCard extends React.Component {
     }
     fetchUser = () => {
         // TODO 等待开放此接口
-        //HttpRequest.asyncGet(this.fetchUserCB.bind(this), '/users/user-by-uuid', {uuid: this.props.uuid} );
+        //RestReq.asyncGet(this.fetchUserCB.bind(this), '/users/user-by-uuid', {uuid: this.props.uuid} );
         this.getUsers();
     }
 
@@ -97,7 +98,7 @@ class UserCard extends React.Component {
                         values.gender = 'F';
                     }
                     Object.assign(newUserData, values, { birthday: '2001/12/31', uuid: this.props.uuid });
-                    HttpRequest.asyncPost(this.updateUserDataCB, '/unified-auth/account_manage/update', newUserData);
+                    RestReq.asyncPost(this.updateUserDataCB, '/unified-auth/account_manage/update', newUserData);
                 }
             });
         }
@@ -131,7 +132,7 @@ class UserCard extends React.Component {
         // TODO 注册完后是guest角色，登录的时候报错，因为查询不了自身信息，需要在激活状态时同时赋予角色
         // TODO 注册完了之后status目前是0 已经激活状态
         const userStore = this.props.userStore;
-        HttpRequest.asyncGet(this.activateUserCB, '/unified-auth/account_manage/activate', { account_uuid: this.props.uuid, access_token: userStore.loginUser.access_token });
+        RestReq.asyncGet(this.activateUserCB, '/unified-auth/account_manage/activate', { account_uuid: this.props.uuid, access_token: userStore.loginUser.access_token });
     }
 
     revokeUserCB = (data) => {
@@ -143,7 +144,7 @@ class UserCard extends React.Component {
     }
     revokeUser = (status) => (event) => {
         const userStore = this.props.userStore;
-        HttpRequest.asyncDelete(this.revokeUserCB, '/unified-auth/account_manage/revoke', { account_uuid: this.props.uuid, access_token: userStore.loginUser.access_token });
+        RestReq.asyncDelete(this.revokeUserCB, '/unified-auth/account_manage/revoke', { account_uuid: this.props.uuid, access_token: userStore.loginUser.access_token });
     }
 
     changeUserGroupCB = (data) => {
@@ -152,7 +153,7 @@ class UserCard extends React.Component {
 
     handleUserGroupChange = (value) => {
         //TODO 暂时还未实现
-        HttpRequest.asyncPost(this.changeUserGroupCB, '/unified-auth/account_manage/change-user-group', { uuid: this.props.uuid, user_group: value });
+        RestReq.asyncPost(this.changeUserGroupCB, '/unified-auth/account_manage/change-user-group', { uuid: this.props.uuid, user_group: value });
     }
 
     userGroupSelect() {
@@ -317,7 +318,15 @@ class UserCard extends React.Component {
                                                 initialValue: userInfo.gender == 'F' ? '女' : '男',
                                                 rules: []
                                             })(
-                                                <Input allowClear />
+                                                <Select
+                                                    value={userInfo.gender}
+                                                    input={
+                                                        <OutlinedInput name="gender" id="gender" />
+                                                    }
+                                                >
+                                                    <option value="F">女</option>
+                                                    <option value="M">男</option>
+                                                </Select>
                                             )
                                         }
                                     </FormItem>

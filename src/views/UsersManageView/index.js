@@ -10,7 +10,7 @@ import { userType } from '../../global/enumeration/UserType'
 import { Skeleton, List, Avatar, Row, Col, Button, Popconfirm, Icon } from 'antd';
 
 import UserCard from './UserCard'
-import HttpRequest from '../../utils/HttpRequest';
+import RestReq from '../../utils/RestReq';
 
 const styles = theme => ({
     iconButton: {
@@ -63,7 +63,7 @@ class UsersManageView extends React.Component {
     onDelete = (event, index) => {
         const { users } = this.state;
         const userStore = this.props.userStore;
-        HttpRequest.asyncPost(this.deleteUserCB, '/unified-auth/account_manage/delete', { access_token: userStore.loginUser.access_token, account_uuid: users[index].uuid });
+        RestReq.asyncDelete(this.deleteUserCB, '/unified-auth/account_manage/delete', { access_token: userStore.loginUser.access_token, account_uuid: users[index].uuid });
     }
 
     generateUserList(users) {
@@ -97,7 +97,7 @@ class UsersManageView extends React.Component {
 
     getUsers() {
         const userStore = this.props.userStore;
-        HttpRequest.asyncGet(this.getUsersCB, '/unified-auth/account_manage/all', { access_token: userStore.loginUser.access_token });
+        RestReq.asyncGet(this.getUsersCB, '/unified-auth/account_manage/all', { access_token: userStore.loginUser.access_token });
     }
 
     userListBox() {

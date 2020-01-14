@@ -210,8 +210,8 @@ class LogIn extends React.Component {
     verifyPasswordCB = (data) => {
         const userStore = this.props.userStore;
         if (data.access_token !== undefined) {
-            this.setState({ access_token: data.access_token });
-            HttpRequest.asyncGet(this.getAccountInfoCB, '/unified-auth/account_manage/self', { access_token: data.access_token }, false);
+            sessionStorage.setItem('access_token', data.access_token);
+            RestReq.asyncGet(this.getAccountInfoCB, '/unified-auth/account_manage/self');
         } else if (data.code === 'ERROR_USER_PASSWORD_LOCKED') {
             // 密码已锁定
             this.setState({
@@ -251,7 +251,8 @@ class LogIn extends React.Component {
 
         const { name, password } = this.state;
         this.props.form.validateFields((err, values) => {
-            HttpRequest.asyncGet(this.verifyPasswordCB, '/unified-auth/oauth/token', { grant_type: 'password', username: name, password }, false);
+            RestReq.asyncGet(this.verifyPasswordCB, '/unified-auth/oauth/token', { grant_type: 'password', username: name, password }, { alwaysCallBack: true, clientAuth: true, token: false });
+            //HttpRequest.asyncGet(this.verifyPasswordCB, '/unified-auth/oauth/token', { grant_type: 'password', username: name, password }, false);
         });
     }
 

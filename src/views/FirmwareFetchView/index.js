@@ -8,10 +8,16 @@ import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormControl from '@material-ui/core/FormControl';
 import FormLabel from '@material-ui/core/FormLabel';
-import { Table, Button, Icon, Row, Col, message } from 'antd';
+import { Table, Progress, Button, Icon, Row, Col, message } from 'antd';
+import { DeepClone, DeepCopy } from '../../utils/ObjUtils'
 import { columns as Column } from './Column'
-import HttpRequest from '../../utils/HttpRequest';
+import RestReq from '../../utils/RestReq';
+import { generateUuidStr } from '../../utils/tools';
+import { sockMsgType } from '../../global/enumeration/SockMsgType'
+import { GetWebSocketUrl, GetViewMinWidth } from '../../global/environment';
+import { GetMainViewHeight } from '../../utils/PageUtils';
 
+let socket = null;
 const styles = theme => ({
     iconButton: {
         margin: 0,
@@ -36,7 +42,58 @@ class FirmwareFetchView extends React.Component {
             scrollWidth: 1000,        // 表格的 scrollWidth
             scrollHeight: 300,      // 表格的 scrollHeight
             firmwareList: [],
+            percent: 0,
         }
+        this.getAllFirmwares();
+    }
+
+    componentDidMount() {
+        // 增加监听器，侦测浏览器窗口大小改变
+        window.addEventListener('resize', this.handleResize.bind(this));
+        this.setState({ scrollHeight: GetMainViewHeight() });
+
+        // 开启300毫秒的定时器
+        // timer300mS = setInterval(() => this.timer300msProcess(), 300);
+
+        // 开启 websocket ，实时获取下载固件进度
+        //this.openWebsocket();
+    }
+
+    handleResize = e => {
+        console.log('浏览器窗口大小改变事件', e.target.innerWidth, e.target.innerHeight);
+        this.setState({ scrollHeight: GetMainViewHeight() });
+    }
+
+    componentWillUnmount() {
+        // 组件卸装前，一定要移除监听器
+        window.removeEventListener('resize', this.handleResize.bind(this));
+
+        // 清除定时器
+        // clearInterval(timer300mS);
+        if (socket != null)
+            socket.close();
+    }
+
+    getAllFirmwares = () => {
+        RestReq.asyncGet(this.getAllFirmwaresCB, '/fw-fetch/list', {}, { token: false });
+    }
+
+    getAllFirmwaresCB = (data) => {
+        let firmwares = [];
+        // 检查响应的payload数据是数组类型
+        if (data.code !== 'ERROR_OK' || data.payload.items === undefined)
+            return;
+
+        // 从响应数据生成 table 数据源
+        firmwares = data.payload.items.map((firmware, index) => {
+            let firmwareItem = DeepClone(firmware);
+            // antd 表格需要数据源中含 key 属性
+            firmwareItem.key = index + 1;
+            // 表格中索引列（后台接口返回数据中没有此属性）
+            firmwareItem.index = index + 1;
+            return firmwareItem;
+        })
+        this.setState({ firmwareList: firmwares });
     }
 
     handleProtocolChange = event => {
@@ -88,13 +145,69 @@ class FirmwareFetchView extends React.Component {
         }
     }
 
+    processSockMessage = (data) => {
+        let message = JSON.parse(data);
+        if (message.type === sockMsgType.MULTIPLE_TASK_RUN_INFO) {
+            // 处理多任务运行状态
+            this.processMultipleTaskRunStatusInfo(message.payload);
+        } else {
+            // 其它消息类型不做处理
+        }
+    }
+
+    openWebsocket = () => {
+        // var socket;
+
+        let self = this;
+        if (typeof (WebSocket) == "undefined") {
+            console.log("您的浏览器不支持WebSocket");
+        } else {
+            console.log("您的浏览器支持WebSocket");
+            //实现化WebSocket对象，指定要连接的服务器地址与端口  建立连接  
+            socket = new WebSocket(GetWebSocketUrl() + 'firmware_download_percent' + generateUuidStr());
+            //打开事件  
+            socket.onopen = function () {
+                console.log("Socket 已打开");
+                //socket.send("这是来自客户端的消息" + location.href + new Date());  
+            };
+            //获得消息事件  
+            socket.onmessage = function (msg) {
+                console.log(msg.data);
+                self.processSockMessage(msg.data);
+                //发现消息进入    开始处理前端触发逻辑
+            };
+            //关闭事件  
+            socket.onclose = function () {
+                console.log("Socket已关闭");
+                socket.close();
+                socket = null;
+            };
+            //发生了错误事件  
+            socket.onerror = function () {
+                message.error("Socket发生了错误");
+                //此时可以尝试刷新页面
+            }
+        }
+
+    }
+
+    processMultipleTaskRunStatusInfo = (payload) => {
+        // 检查响应的payload
+        if (payload.percent === undefined)
+            return;
+
+        // 更新下载进度条
+        this.setState({ percent: payload.percent });
+    }
+
     getFirmwareInfoCB = (data) => {
 
     }
 
     getFirmwareInfo = event => {
         if (this.checkProtocolRules()) {
-            HttpRequest.asyncGet(this.getFirmwareInfoCB, '/unified-auth/account_manage/all', { access_token: '' });
+            // TODO 目前从网关走不能正确调用django，只能直接调用
+            RestReq.asyncGet(this.getFirmwareInfoCB, '/firmware-analyze/fw-fetch/downloadex', { url: this.state.url }, { token: false });
         } else {
             message.info('URL输入错误，请重新输入URL');
         }
@@ -132,8 +245,12 @@ class FirmwareFetchView extends React.Component {
                         <Button type="primary" size="large" onClick={this.getFirmwareInfo.bind(this)}><Icon type="download" />下载固件</Button>
                     </Col>
                 </Row>
-                <br/>
-                <br/>
+                <br />
+                <div style={{ marginLeft: 10, width: '60%' }}>
+                    <Progress percent={this.state.percent} strokeWidth='20px' strokeColor={{ '0%': '#108ee9', '100%': '#87d068', }} />
+                </div>
+                <br />
+                <br />
                 <FormControl margin="normal" className={classes.formControl}>
                     <FormLabel component="legend">固件列表</FormLabel>
                     <Table
