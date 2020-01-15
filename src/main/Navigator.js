@@ -30,6 +30,14 @@ const hostMenus = [
         ]
     },
     {
+        title: '授权文件管理',
+        icon: 'control',
+        key: '/home/certfile-manage/',
+        subs: [
+            { key: '/home/certfile-manage/generate', title: '授权文件生成', icon: 'download', },
+        ]
+    },
+    {
         title: '关于',
         icon: 'info-circle-o',
         key: '/home/about'

@@ -75,7 +75,7 @@ class FirmwareFetchView extends React.Component {
     }
 
     getAllFirmwares = () => {
-        RestReq.asyncGet(this.getAllFirmwaresCB, '/fw-fetch/list', {}, { token: false });
+        RestReq.asyncGet(this.getAllFirmwaresCB, '/firmware-analyze/fw-fetch/list', {}, { token: false });
     }
 
     getAllFirmwaresCB = (data) => {
@@ -206,6 +206,8 @@ class FirmwareFetchView extends React.Component {
 
     getFirmwareInfo = event => {
         if (this.checkProtocolRules()) {
+            // 把进度条设置成0
+            this.setState({ percent: 0 });
             // TODO 目前从网关走不能正确调用django，只能直接调用
             RestReq.asyncGet(this.getFirmwareInfoCB, '/firmware-analyze/fw-fetch/downloadex', { url: this.state.url }, { token: false });
         } else {

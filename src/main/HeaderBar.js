@@ -18,7 +18,7 @@ import MenuIcon from '@material-ui/icons/Menu';
 import { Typography, Row, Col, Tag } from 'antd';
 
 import LogoImage from '../resources/image/logo.jpg'
-import HttpRequest from '../utils/HttpRequest';
+import RestReq from '../utils/RestReq';
 // import { Logout } from '../components/login/Logout';
 import { GetSystemName, GetViewMinWidth } from "../global/environment"
 
@@ -92,8 +92,7 @@ class HeaderBar extends React.Component {
   logoutCB = (data) => {
   }
   logout = () => {
-    const { access_token, uuid } = this.props.userStore.loginUser;
-    HttpRequest.asyncDelete(this.logoutCB, '/unified-auth/account_auth/exit', {access_token, uuid});
+    RestReq.asyncDelete(this.logoutCB, '/unified-auth/account_auth/exit');
     // this.props.appStore.toggleLogin(false)
     // this.props.history.push(this.props.location.pathname)
     const userStore = this.props.userStore;

@@ -1,8 +1,7 @@
 import React from 'react';
 import { Route, withRouter } from 'react-router-dom';
 import LoginPage from '../../components/login/LoginPage';
-import HttpRequest from '../../utils/HttpRequest';
-import { errorCode } from '../../global/error';
+import RestReq from '../../utils/RestReq';
 
 import { observer, inject } from 'mobx-react'
 
@@ -29,18 +28,18 @@ class PrivateRoute extends React.Component {
         const isUserLogin = this.state;
         if (!isUserLogin || !userStore.loginUser.isLogin) {
             userStore.initLoginUser();
-            HttpRequest.asyncPost(this.verifyPasswordCB, '/users/verify-pwd', { account: userStore.loginUser.account, password: userStore.loginUser.password }, false);
+            RestReq.asyncGet(this.verifyPasswordCB, '/unified-auth/oauth/token', { grant_type: 'password', username: userStore.loginUser.name, password: userStore.loginUser.password }, { alwaysCallBack: true, clientAuth: true, token: false });
         }
     }
 
     verifyPasswordCB = (data) => {
         const userStore = this.props.userStore;
-        if (data.code === errorCode.ERROR_OK) {
+        if (data.code === 'ERROR_OK') {
             // 密码校验成功，保存登录用户
-            const { account, password } = this.state;
+            const { name, password } = this.state;
             userStore.setLoginUser({
                 isLogin: true,
-                account,
+                name,
                 uuid: data.payload.user_uuid,
                 password,
                 userGroup: data.payload.user_group,

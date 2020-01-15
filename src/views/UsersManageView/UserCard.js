@@ -7,7 +7,6 @@ import { observer, inject } from 'mobx-react'
 
 import ChangePwdDlg from '../../components/ChangePwdDlg';
 import RestReq from '../../utils/RestReq';
-import { errorCode } from '../../global/error';
 
 const FormItem = Form.Item;
 const Option = Select.Option;
@@ -43,27 +42,7 @@ class UserCard extends React.Component {
             userInfo: {}, // 临时保存修改但未提交的用户信息，实际的用户信息保存在 this.props.user
             userInfoReady: false,
         };
-        //TODO 现在用的是全部用户取出来，查找对应的用户，后续需要提供根据uuid查询用户接口
-        //原本打算把全部用户保存起来，然后修改某个用户后需要更新父页面重新查询用户或者更新全用用户list
         this.fetchUser();
-    }
-
-    getUsersCB = (data) => {
-        if (data.code === 'ERROR_OK') {
-            for (let i = 0; i < data.payload.length; i++) {
-                if (this.props.uuid === data.payload[i].uuid) {
-                    this.setState({ userUuid: this.props.uuid, userInfo: data.payload[i], userInfoReady: true });
-                    const { resetFields } = this.props.form;
-                    resetFields();
-                    break;
-                }
-            }
-        }
-    }
-
-    getUsers() {
-        const userStore = this.props.userStore;
-        RestReq.asyncGet(this.getUsersCB, '/unified-auth/account_manage/all', { access_token: userStore.loginUser.access_token });
     }
 
     fetchUserCB = (data) => {
@@ -72,9 +51,7 @@ class UserCard extends React.Component {
         resetFields();
     }
     fetchUser = () => {
-        // TODO 等待开放此接口
-        //RestReq.asyncGet(this.fetchUserCB.bind(this), '/users/user-by-uuid', {uuid: this.props.uuid} );
-        this.getUsers();
+        RestReq.asyncGet(this.fetchUserCB, '/unified-auth/account_manage/account_info', { account_uuid: this.props.uuid });
     }
 
     cancelModifyDetails = () => {
@@ -85,18 +62,12 @@ class UserCard extends React.Component {
 
     modifyDetails = () => {
         let success = true;
-        const userStore = this.props.userStore;
         if (this.state.isModifyDetails) {
             this.props.form.validateFields((err, values) => {
                 if (err !== null) {
                     success = false;
                 } else {
-                    let newUserData = { access_token: userStore.loginUser.access_token };
-                    if (values.gender === '男') {
-                        values.gender = 'M';
-                    } else {
-                        values.gender = 'F';
-                    }
+                    let newUserData = {};
                     Object.assign(newUserData, values, { birthday: '2001/12/31', uuid: this.props.uuid });
                     RestReq.asyncPost(this.updateUserDataCB, '/unified-auth/account_manage/update', newUserData);
                 }
@@ -132,7 +103,7 @@ class UserCard extends React.Component {
         // TODO 注册完后是guest角色，登录的时候报错，因为查询不了自身信息，需要在激活状态时同时赋予角色
         // TODO 注册完了之后status目前是0 已经激活状态
         const userStore = this.props.userStore;
-        RestReq.asyncGet(this.activateUserCB, '/unified-auth/account_manage/activate', { account_uuid: this.props.uuid, access_token: userStore.loginUser.access_token });
+        RestReq.asyncGet(this.activateUserCB, '/unified-auth/account_manage/activate', { account_uuid: this.props.uuid });
     }
 
     revokeUserCB = (data) => {
@@ -143,13 +114,37 @@ class UserCard extends React.Component {
         }
     }
     revokeUser = (status) => (event) => {
-        const userStore = this.props.userStore;
-        RestReq.asyncDelete(this.revokeUserCB, '/unified-auth/account_manage/revoke', { account_uuid: this.props.uuid, access_token: userStore.loginUser.access_token });
+        RestReq.asyncDelete(this.revokeUserCB, '/unified-auth/account_manage/revoke', { account_uuid: this.props.uuid });
+    }
+
+    unlockPwdCB = (data) => {
+        if (data.code === 'ERROR_OK') {
+            this.fetchUser();
+        } else {
+            message.info(data.error);
+        }
+    }
+    unlockPwd = (status) => (event) => {
+        RestReq.asyncGet(this.unlockPwdCB, '/unified-auth/account_manage/unlock_pwd', { account_uuid: this.props.uuid });
     }
 
     changeUserGroupCB = (data) => {
         this.fetchUser();
     }
+
+    handleGenderChange = currency => {
+        this.triggerChange({ currency });
+    };
+
+    triggerChange = changedValue => {
+        const { onChange, value } = this.props;
+        if (onChange) {
+            onChange({
+                ...value,
+                ...changedValue,
+            });
+        }
+    };
 
     handleUserGroupChange = (value) => {
         //TODO 暂时还未实现
@@ -172,13 +167,18 @@ class UserCard extends React.Component {
 
     getUserStateInfo() {
         const { userInfo } = this.state;
+        //TODO userInfo.user_group !== 99 必须是管理员角色才可以做这些操作
         if (userInfo.status === 1 && this.props.manage === 1) {
             return (
                 <a onClick={this.activateUser(1).bind(this)}>激活</a>
             );
-        } else if (userInfo.locked === 1 && userInfo.user_group !== 99 && this.props.manage === 1) {
+        } else if (userInfo.status === 0 && userInfo.locked === 1 && this.props.manage === 1) {
             return (
-                <a onClick={this.revokeUser(0).bind(this)}>回收</a>//可以在这里实现解锁功能
+                <a onClick={this.unlockPwd(0).bind(this)}>解锁</a>
+            );
+        } else if (userInfo.status === 0 && this.props.manage === 1) {
+            return (
+                <a onClick={this.revokeUser(0).bind(this)}>回收</a>
             );
         }
     }
@@ -215,7 +215,7 @@ class UserCard extends React.Component {
         // but still need the element to resemble a link, use a button and change it with appropriate styles.
         return (
             <div>
-                <Card title={userInfo.name} extra={this.userGroupSelect()}>
+                <Card title={userInfo.name}>{/*extra={this.userGroupSelect()} */}
                     <Card
                         type="inner"
                         title='基本信息'
@@ -229,8 +229,8 @@ class UserCard extends React.Component {
                                 {"账号ID：" + userInfo.uuid}
                             </Col>
                             <Col span={4}>
-                                {(userInfo.status === 0) && "账户未激活"}
-                                {(userInfo.status === 1) && "账户已激活"}
+                                {(userInfo.status === 0) && "账户已激活"}
+                                {(userInfo.status === 1) && "账户未激活"}
                             </Col>
                         </Row>
                     </Card>
@@ -323,6 +323,7 @@ class UserCard extends React.Component {
                                                     input={
                                                         <OutlinedInput name="gender" id="gender" />
                                                     }
+                                                    onChange={this.handleGenderChange}
                                                 >
                                                     <option value="F">女</option>
                                                     <option value="M">男</option>

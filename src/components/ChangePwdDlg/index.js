@@ -5,8 +5,7 @@ import { withStyles } from '@material-ui/core/styles';
 import { Modal, Form, Input, message, Typography } from 'antd'
 
 import Draggable from '../window/Draggable'
-import HttpRequest from '../../utils/HttpRequest';
-import { errorCode } from '../../global/error';
+import RestReq from '../../utils/RestReq';
 
 const FormItem = Form.Item;
 const { Text } = Typography;
@@ -44,20 +43,20 @@ class ChangePwdDlg extends React.Component {
     }
 
     verifyPasswordCB = (data) => {
-        if (data.code === errorCode.ERROR_OK) {
+        if (data.code === 'ERROR_OK') {
             message.info('修改密码成功');
             this.state.onClose();
-        } else if (data.code === errorCode.ERROR_USER_PASSWORD_LOCKED) {
+        } else if (data.code === 'ERROR_PASSWORD_LOCKED') {
             // 密码已锁定
             this.setState({
                 showVerifyError: true,
-                verifyError: '密码已锁定，请联系管理员解锁密码',
+                verifyError: data.error,
             });
-        } else if (data.code === errorCode.ERROR_INVALID_PASSWORD) {
+        } else if (data.code === 'ERROR_INVALID_PASSWORD') {
             // 密码校验失败，提示剩余尝试次数
             this.setState({
                 showVerifyError: true,
-                verifyError: '密码错误，您还有 ' + data.payload.rat + ' 次尝试机会',
+                verifyError: data.payload.info,
             });
         } 
     }
@@ -80,7 +79,7 @@ class ChangePwdDlg extends React.Component {
             return;
         }
         // 调用后端修改密码接口
-        HttpRequest.asyncPost(this.verifyPasswordCB, '/users/change-pwd', params, false);
+        RestReq.asyncPost(this.verifyPasswordCB, '/unified-auth/account_manage/change_pwd', params);
     }
 
     handleCancel = (e) => {

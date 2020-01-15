@@ -16,12 +16,10 @@ import Link from '@material-ui/core/Link';
 import LoginBGImage from '../../resources/image/login_bg.jpg'
 import { observer, inject } from 'mobx-react'
 import { withRouter } from 'react-router-dom'
-import { GetSystemType } from "../../global/environment"
 
 import { Row, Col, message, Form } from 'antd'
 
 import { randomNum } from '../../utils/tools'
-import HttpRequest from '../../utils/HttpRequest';
 import RestReq from '../../utils/RestReq';
 
 const styles = theme => ({
@@ -97,7 +95,6 @@ const veriCodeHeight = 60;
 @withRouter
 @observer
 @inject('userStore')
-// @inject('taskStore')
 @Form.create()
 class LogIn extends React.Component {
 
@@ -111,7 +108,6 @@ class LogIn extends React.Component {
             verifyCode: '',
             showVerifyError: false,
             verifyError: '',
-            access_token: '',
         };
 
         this.handleSubmit = this.handleSubmit.bind(this);
@@ -148,46 +144,16 @@ class LogIn extends React.Component {
         return true;
     }
 
-    // getSystemConfigCB = (data) => {
-    //     // 检查响应的payload数据是数组类型
-    //     if (!(data.payload instanceof Array))
-    //         return;
-
-    //     let mailToManagerAddress = '';
-    //     let mailToManagerOnOff = '';
-    //     for (let config of data.payload) {
-    //         let name = config.name;
-    //         if (name !== '') {
-    //             if (name === 'mail-to-manager-address') {
-    //                 mailToManagerAddress = config.value;
-    //             } else if (name === 'mail-to-manager-on-off') {
-    //                 mailToManagerOnOff = config.value;
-    //             }
-    //         }
-    //     }
-    //     if (mailToManagerOnOff === 'on') {
-    //         const { name } = this.state;
-    //         let subject = '账号' + name + '密码已锁定';
-    //         let content = '账号' + name + '在主站系统自动化配置检测工具系统中的密码已被锁定，请解锁其密码';
-    //         HttpRequest.asyncGet(this.sendMailCB, '/emails/send', { subject, content, mailToManagerAddress });
-    //     }
-    // }
-
-    // getSystemConfig() {
-    //     HttpRequest.asyncGet(this.getSystemConfigCB, '/system-config/all');
-    // }
-
     getAccountInfoCB = (data) => {
         // 密码校验成功，保存登录用户
         if (data.code === 'ERROR_OK') {
-            const { name, password, access_token } = this.state;
+            const { name, password } = this.state;
             const userStore = this.props.userStore;
             userStore.setLoginUser({
                 isLogin: true,
                 name,
                 uuid: data.payload.uuid,
                 password,
-                access_token,
                 //userGroup: data.payload.user_group,
                 email: data.payload.email,
             });
@@ -212,7 +178,7 @@ class LogIn extends React.Component {
         if (data.access_token !== undefined) {
             sessionStorage.setItem('access_token', data.access_token);
             RestReq.asyncGet(this.getAccountInfoCB, '/unified-auth/account_manage/self');
-        } else if (data.code === 'ERROR_USER_PASSWORD_LOCKED') {
+        } else if (data.code === 'ERROR_PASSWORD_LOCKED') {
             // 密码已锁定
             this.setState({
                 showVerifyError: true,
@@ -252,7 +218,6 @@ class LogIn extends React.Component {
         const { name, password } = this.state;
         this.props.form.validateFields((err, values) => {
             RestReq.asyncGet(this.verifyPasswordCB, '/unified-auth/oauth/token', { grant_type: 'password', username: name, password }, { alwaysCallBack: true, clientAuth: true, token: false });
-            //HttpRequest.asyncGet(this.verifyPasswordCB, '/unified-auth/oauth/token', { grant_type: 'password', username: name, password }, false);
         });
     }
 

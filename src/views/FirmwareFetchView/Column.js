@@ -3,11 +3,11 @@ import EllipsisText from '../../components/widgets/EllipsisText';
 import { Tag } from 'antd';
 
 export const columns = [
-  // {
-  //   title: '序号', width: 150, dataIndex: 'index', key: 'key',
-  //   sorter: (a, b) => a.index - b.index,
-  //   render: content => <EllipsisText content={content} width={150}/>,
-  // },
+  {
+    title: '序号', width: 150, dataIndex: 'index', key: 'key',
+    //sorter: (a, b) => a.index - b.index,
+    render: content => <EllipsisText content={content} width={150}/>,
+  },
     {
     title: '固件编号', width: 200, dataIndex: 'firmware_id', key: 'firmware_id',
     //sorter: (a, b) => a.index - b.index,

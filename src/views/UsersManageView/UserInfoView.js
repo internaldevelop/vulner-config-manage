@@ -5,12 +5,11 @@ import { withStyles } from '@material-ui/core/styles';
 import { Skeleton, Row, Col } from 'antd';
 import { observer, inject } from 'mobx-react'
 import { userType } from '../../global/enumeration/UserType'
-// import UserStore from '../../main/store/UserStore';
 import { withRouter } from 'react-router-dom'
 
 
 import UserCard from './UserCard'
-import HttpRequest from '../../utils/HttpRequest';
+import RestReq from '../../utils/RestReq';
 
 const styles = theme => ({
     iconButton: {
@@ -55,9 +54,7 @@ class UserInfoView extends React.Component {
 
     getLoginUser() {
         let userUuid = this.getLoginUserUuid();
-        // TODO 登录的时候用户信息已经存到userStore里面，直接从userStore获取数据，目前根据uuid取用户信息接口暂时没有
-        this.getUserInfo();
-        //HttpRequest.asyncGet(this.getLoginUserCB, '/users/user-by-uuid', { uuid: userUuid });
+        RestReq.asyncGet(this.getLoginUserCB, '/unified-auth/account_manage/account_info', { account_uuid: userUuid });
     }
 
     render() {

@@ -17,7 +17,6 @@ const LoadUserLoginInfo = () => {
             name: '',
             uuid: '',
             password: '',
-            access_token: '',
             expire: '',
             userGroup: userType.TYPE_NORMAL_USER,
             email: '',
@@ -33,7 +32,6 @@ export class UserStore {
         name: '',
         uuid: '',
         password: '',
-        access_token: '',
         expire: '',
         userGroup: userType.TYPE_NORMAL_USER,
         email: '',
@@ -43,12 +41,11 @@ export class UserStore {
     };
     @action saveLoginUser = (expireDays) => {
         let info = JSON.stringify({
-            account: this.loginUser.account,
+            name: this.loginUser.name,
             uuid: this.loginUser.uuid,
             password: this.loginUser.password,
             expire: GetExpireTimeGMTStr(expireDays),
             email: this.loginUser.email,
-            access_token: this.loginUser.access_token,
         });
         SetCookieExpireDays(loginInfoName, info, expireDays);
     }
@@ -59,7 +56,7 @@ export class UserStore {
     }
 
     @computed get isUserExpired() {
-        return IsEmptyString(this.loginUser.account);
+        return IsEmptyString(this.loginUser.name);
     }
 
     @computed get isAdminUser() {

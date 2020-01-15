@@ -81,7 +81,7 @@ class SystemLogsView extends React.Component {
     querySystemLogs = () => {
         // TODO, 用户名和用户名称需要联合查询用户表，当前接口没有此信息
         // TODO, 后续需要实现分页功能
-        return RestReq.asyncGet(this.querySystemLogsCB, '/system-log/sys_log/search_by_filter', { offset: 0, count: 100}, { token: false });
+        return RestReq.asyncGet(this.querySystemLogsCB, '/system-log/sys_log/search_by_filter', { offset: 0, count: 10}, { token: false });
     }
 
     logTypeArray() {

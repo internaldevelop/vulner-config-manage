@@ -63,7 +63,7 @@ class UsersManageView extends React.Component {
     onDelete = (event, index) => {
         const { users } = this.state;
         const userStore = this.props.userStore;
-        RestReq.asyncDelete(this.deleteUserCB, '/unified-auth/account_manage/delete', { access_token: userStore.loginUser.access_token, account_uuid: users[index].uuid });
+        RestReq.asyncDelete(this.deleteUserCB, '/unified-auth/account_manage/delete', { account_uuid: users[index].uuid });
     }
 
     generateUserList(users) {
@@ -97,7 +97,7 @@ class UsersManageView extends React.Component {
 
     getUsers() {
         const userStore = this.props.userStore;
-        RestReq.asyncGet(this.getUsersCB, '/unified-auth/account_manage/all', { access_token: userStore.loginUser.access_token });
+        RestReq.asyncGet(this.getUsersCB, '/unified-auth/account_manage/all');
     }
 
     userListBox() {
