@@ -41,17 +41,44 @@ class UserCard extends React.Component {
             userUuid: this.props.uuid,
             userInfo: {}, // 临时保存修改但未提交的用户信息，实际的用户信息保存在 this.props.user
             userInfoReady: false,
+            rolenames: [],
         };
         this.fetchUser();
     }
 
+    getRoleInfoCB = (data) => {
+        if (data.code === 'ERROR_OK') {
+            if (data.payload !== undefined && data.payload.roles !== undefined
+                && data.payload.roles instanceof Array) {
+                    let payloadData = this.state.userInfo;
+                    payloadData.roles = data.payload.roles;
+                    let userInfoReady = false;
+                    let rolenames = [];
+                    if (this.state.userInfo.name !== undefined) {
+                        userInfoReady = true;
+                    }
+
+                    for (let i = 0; i < payloadData.roles.length; i++) {
+                        rolenames.push(payloadData.roles[i].role_name);
+                    }
+                    this.setState({ userInfo: payloadData, userInfoReady, rolenames });
+            }
+        }
+    }
+
     fetchUserCB = (data) => {
-        this.setState({ userUuid: this.props.uuid, userInfo: data.payload, userInfoReady: true });
+        let userInfoReady = false;
+        if (this.state.userInfo.roles !== undefined) {
+            userInfoReady = true;
+        }
+        this.setState({ userUuid: this.props.uuid, userInfo: data.payload, userInfoReady });
         const { resetFields } = this.props.form;
         resetFields();
     }
     fetchUser = () => {
         RestReq.asyncGet(this.fetchUserCB, '/unified-auth/account_manage/account_info', { account_uuid: this.props.uuid });
+        // 获取用户角色, TODO 接口可以考虑获取用户信息的时候把角色同时返回
+        RestReq.asyncGet(this.getRoleInfoCB, '/unified-auth/account_role_map/all', { account_uuid: this.props.uuid });
     }
 
     cancelModifyDetails = () => {
@@ -100,7 +127,7 @@ class UserCard extends React.Component {
         }
     }
     activateUser = (status) => (event) => {
-        // TODO 注册完后是guest角色，登录的时候报错，因为查询不了自身信息，需要在激活状态时同时赋予角色
+        // TODO 注册完后是guest角色，登录的时候报错，因为查询不了自身信息，需要管理员分配角色
         // TODO 注册完了之后status目前是0 已经激活状态
         const userStore = this.props.userStore;
         RestReq.asyncGet(this.activateUserCB, '/unified-auth/account_manage/activate', { account_uuid: this.props.uuid });
@@ -146,28 +173,30 @@ class UserCard extends React.Component {
         }
     };
 
-    handleUserGroupChange = (value) => {
-        //TODO 暂时还未实现
-        RestReq.asyncPost(this.changeUserGroupCB, '/unified-auth/account_manage/change-user-group', { uuid: this.props.uuid, user_group: value });
+    handleUserRoleChange = (values) => {
+        // TODO 后台增加接口，修改用户的角色，统一用一个接口，穿一个list
+        // TODO 后台这个接口，考虑只用role_name就ok 不要在前端保留role_uuid
+        RestReq.asyncPost(this.changeUserGroupCB, '/unified-auth/account_manage/change-user-group', { uuid: this.props.uuid, user_group: values });
     }
 
     userGroupSelect() {
-        const { userInfo, userInfoReady } = this.state;
+        const { userInfo, userInfoReady, rolenames } = this.state;
         const userStore = this.props.userStore;
         return (
             (this.props.manage === 1) && userInfoReady &&
             userStore.loginUser.uuid !== userInfo.uuid &&
-            <Select value={userInfo.user_group} style={{ width: 120 }} onChange={this.handleUserGroupChange.bind(this)}>
-                <Option value={99}>系统管理员</Option>
-                <Option value={2}>系统审计员</Option>
-                <Option value={1}>普通用户</Option>
+            <Select mode="multiple" value={rolenames} style={{ width: 400 }} onChange={this.handleUserRoleChange.bind(this)}>
+                <Option value='ROLE_ADMIN'>管理员</Option>
+                <Option value='ROLE_AUDITOR'>审计员</Option>
+                <Option value='ROLE_USER'>普通用户</Option>
+                <Option value='ROLE_OPERATOR'>操作员</Option>
+                <Option value='ROLE_GUEST'>游客</Option>
             </Select>
         );
     }
 
     getUserStateInfo() {
         const { userInfo } = this.state;
-        //TODO userInfo.user_group !== 99 必须是管理员角色才可以做这些操作
         if (userInfo.status === 1 && this.props.manage === 1) {
             return (
                 <a onClick={this.activateUser(1).bind(this)}>激活</a>
@@ -215,7 +244,7 @@ class UserCard extends React.Component {
         // but still need the element to resemble a link, use a button and change it with appropriate styles.
         return (
             <div>
-                <Card title={userInfo.name}>{/*extra={this.userGroupSelect()} */}
+                <Card title={userInfo.name} extra={this.userGroupSelect()}>
                     <Card
                         type="inner"
                         title='基本信息'

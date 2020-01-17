@@ -155,7 +155,7 @@ class UsersManageView extends React.Component {
         // let user = users[selectedAccID];
         return (
             <div>
-                <Skeleton loading={false} active avatar>
+                <Skeleton loading={!userStore.isAdminUser} active avatar>
                     {
                         usersDataReady && selectedAccID >= 0 &&
                         <Row>

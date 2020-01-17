@@ -144,6 +144,16 @@ class LogIn extends React.Component {
         return true;
     }
 
+    getRoleInfoCB = (data) => {
+        if (data.code === 'ERROR_OK') {
+            const userStore = this.props.userStore;
+            if (data.payload !== undefined && data.payload.roles !== undefined
+                && data.payload.roles instanceof Array) {
+                    userStore.updateUserRoles(data.payload.roles);
+            }
+        }
+    }
+
     getAccountInfoCB = (data) => {
         // 密码校验成功，保存登录用户
         if (data.code === 'ERROR_OK') {
@@ -154,9 +164,11 @@ class LogIn extends React.Component {
                 name,
                 uuid: data.payload.uuid,
                 password,
-                //userGroup: data.payload.user_group,
                 email: data.payload.email,
             });
+
+            // 获取用户角色
+            RestReq.asyncGet(this.getRoleInfoCB, '/unified-auth/account_role_map/all', { account_uuid: data.payload.uuid });
 
             let remember = document.getElementById('remember').checked;
             if (remember)

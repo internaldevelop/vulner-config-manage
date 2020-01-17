@@ -176,6 +176,5 @@
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/internaldevelop/vulner-config-manage/issues"
-  },
-  "homepage": "https://github.com/internaldevelop/vulner-config-manage#readme"
+  }
 }

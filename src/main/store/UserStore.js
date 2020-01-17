@@ -18,8 +18,8 @@ const LoadUserLoginInfo = () => {
             uuid: '',
             password: '',
             expire: '',
-            userGroup: userType.TYPE_NORMAL_USER,
             email: '',
+            roles: {},
         });
     }
     var value = JSON.parse(login);
@@ -33,8 +33,11 @@ export class UserStore {
         uuid: '',
         password: '',
         expire: '',
-        userGroup: userType.TYPE_NORMAL_USER,
         email: '',
+        roles: {},//以下是roles结构
+        // "role_uuid": "",
+        // "role_name": "ROLE_USER",
+        // "role_alias": "普通用户"
     };
     @action setLoginUser = (user) => {
         Object.assign(this.loginUser, user);
@@ -46,6 +49,7 @@ export class UserStore {
             password: this.loginUser.password,
             expire: GetExpireTimeGMTStr(expireDays),
             email: this.loginUser.email,
+            roles: this.loginUser.roles,
         });
         SetCookieExpireDays(loginInfoName, info, expireDays);
     }
@@ -55,20 +59,39 @@ export class UserStore {
         Object.assign(this.loginUser, cachedUser);
     }
 
+    @action updateUserRoles = (roles) => {
+        this.loginUser.roles = roles;
+    }
+
     @computed get isUserExpired() {
         return IsEmptyString(this.loginUser.name);
     }
 
     @computed get isAdminUser() {
-        return this.loginUser.userGroup === userType.TYPE_ADMINISTRATOR;
+        for (let i = 0; i < this.loginUser.roles.length; i++) {
+            if (this.loginUser.roles[i].role_name === 'ROLE_ADMIN') {
+                return true;
+            }
+        }
+        return false
     }
 
     @computed get isAuditUser() {
-        return this.loginUser.userGroup === userType.TYPE_AUDITOR;
+        for (let i = 0; i < this.loginUser.roles.length; i++) {
+            if (this.loginUser.roles[i].role_name === 'ROLE_AUDITOR') {
+                return true;
+            }
+        }
+        return false;
     }
 
     @computed get isNormalUser() {
-        return this.loginUser.userGroup === userType.TYPE_NORMAL_USER;
+        for (let i = 0; i < this.loginUser.roles.length; i++) {
+            if (this.loginUser.roles[i].role_name === 'ROLE_USER') {
+                return true;
+            }
+        }
+        return false;
     }
 }
 

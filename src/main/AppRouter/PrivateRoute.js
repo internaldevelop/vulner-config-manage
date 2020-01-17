@@ -42,7 +42,6 @@ class PrivateRoute extends React.Component {
                 name,
                 uuid: data.payload.user_uuid,
                 password,
-                userGroup: data.payload.user_group,
                 email: data.payload.email,
             });
             this.setState({ isUserLogin: true });
