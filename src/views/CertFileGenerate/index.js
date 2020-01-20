@@ -2,7 +2,8 @@ import React from 'react'
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import { observer, inject } from 'mobx-react'
-import { DatePicker, Icon, Button, Skeleton, Select, Card, Row, Col } from 'antd'
+import { message, DatePicker, Icon, Button, Skeleton, Select, Card, Row, Col } from 'antd'
+import { GetMainServerRootUrl } from '../../global/environment'
 
 import RestReq from '../../utils/RestReq';
 
@@ -33,7 +34,7 @@ class CertFileGenerate extends React.Component {
             users: [],
             selectUserUuid: '',
             selectRoles: [],
-            expireDate: null,
+            expireDate: '',
         }
         this.getUsers();
     }
@@ -64,15 +65,31 @@ class CertFileGenerate extends React.Component {
     }
 
     handleDateChange = (date, dateString) => {
-        this.setState({ expireDate: date });
+        this.setState({ expireDate: dateString });
     }
 
     handleUserRoleChange = (values) => {
         this.setState({ selectRoles: values });
     }
 
+    getCertFileCB = (data) => {
+        //
+    }
+
     getCertFile = event => {
         // 调接口生成授权文件
+        if (this.state.expireDate === '') {
+            message.info("授权到期日期不能为空");
+            return;
+        } else {
+            if (this.state.selectRoles.length > 0) {
+                window.location.href = GetMainServerRootUrl() + '/unified-auth/license/create?expire_time=' + this.state.expireDate + '&access_token=' + RestReq._getAccessToken() + '&sign=1' + '&role_uuids=' + this.state.selectRoles.toString() + '&account_uuid=' + this.state.selectUserUuid;
+                //RestReq.asyncGet(this.getCertFileCB, '/unified-auth/license/create', {expire_time: this.state.expireDate, sign: 1, role_uuids: this.state.selectRoles.toString, account_uuid: this.state.selectUserUuid});
+            } else {
+                window.location.href = GetMainServerRootUrl() + '/unified-auth/license/create?expire_time=' + this.state.expireDate + '&access_token=' + RestReq._getAccessToken() + '&sign=0' + '&account_uuid=' + this.state.selectUserUuid;
+                //RestReq.asyncGet(this.getCertFileCB, '/unified-auth/license/create', {expire_time: this.state.expireDate, sign: 0, account_uuid: this.state.selectUserUuid});
+            }
+        }
     }
 
     render() {
@@ -115,7 +132,7 @@ class CertFileGenerate extends React.Component {
                                     <br />
                                     <Row>
                                         <Col span={4}>
-                                            {"请选择到期日期："}
+                                            {"请选择到期日期*："}
                                         </Col>
                                         <Col span={4} >
                                             <DatePicker placeholder="选择日期" style={{ width: 200 }} onChange={this.handleDateChange} />

@@ -157,6 +157,13 @@ class LogIn extends React.Component {
     getAccountInfoCB = (data) => {
         // 密码校验成功，保存登录用户
         if (data.code === 'ERROR_OK') {
+            if (data.payload.expire_flag === '0') {//expire_flag === 1为有效，0为失效
+                this.setState({
+                    showVerifyError: true,
+                    verifyError: '用户授权到期，请联系管理员',
+                });
+                return;
+            }
             const { name, password } = this.state;
             const userStore = this.props.userStore;
             userStore.setLoginUser({

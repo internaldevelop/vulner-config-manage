@@ -4,7 +4,6 @@ import { withStyles } from '@material-ui/core/styles';
 
 import { Skeleton, Row, Col } from 'antd';
 import { observer, inject } from 'mobx-react'
-import { userType } from '../../global/enumeration/UserType'
 import { withRouter } from 'react-router-dom'
 
 
