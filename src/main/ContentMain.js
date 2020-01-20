@@ -10,6 +10,7 @@ import UserInfoView from '../views/UsersManageView/UserInfoView'
 import AboutView from '../views/AboutView'
 import AssetManageView from '../views/AssetManageView';
 import FirmwareFetchView from '../views/FirmwareFetchView';
+import CertFileGenerate from '../views/CertFileGenerate';
 
 @withRouter
 class ContentMain extends React.Component {
@@ -31,6 +32,7 @@ class ContentMain extends React.Component {
         <PrivateRoute exact path='/home/sysadmin/assets' component={AssetManageView} />
 
         <PrivateRoute exact path='/home/firmware-analyze/fetch' component={FirmwareFetchView} />
+        <PrivateRoute exact path='/home/certfile-manage/generate' component={CertFileGenerate} />
 
         <PrivateRoute exact path='/home/about' component={AboutView} />
 

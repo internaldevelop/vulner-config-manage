@@ -29,6 +29,7 @@ const styles = theme => ({
     },
 });
 
+@inject('userRoleStore')
 @inject('userStore')
 @observer
 @Form.create()
@@ -41,27 +42,32 @@ class UserCard extends React.Component {
             userUuid: this.props.uuid,
             userInfo: {}, // 临时保存修改但未提交的用户信息，实际的用户信息保存在 this.props.user
             userInfoReady: false,
-            rolenames: [],
+            roleIds: [],
         };
         this.fetchUser();
+    }
+
+    componentWillMount() {
+        // 加载用户角色
+        this.props.userRoleStore.loadAllRoles();
     }
 
     getRoleInfoCB = (data) => {
         if (data.code === 'ERROR_OK') {
             if (data.payload !== undefined && data.payload.roles !== undefined
                 && data.payload.roles instanceof Array) {
-                    let payloadData = this.state.userInfo;
-                    payloadData.roles = data.payload.roles;
-                    let userInfoReady = false;
-                    let rolenames = [];
-                    if (this.state.userInfo.name !== undefined) {
-                        userInfoReady = true;
-                    }
+                let payloadData = this.state.userInfo;
+                payloadData.roles = data.payload.roles;
+                let userInfoReady = false;
+                let roleIds = [];
+                if (this.state.userInfo.name !== undefined) {
+                    userInfoReady = true;
+                }
 
-                    for (let i = 0; i < payloadData.roles.length; i++) {
-                        rolenames.push(payloadData.roles[i].role_name);
-                    }
-                    this.setState({ userInfo: payloadData, userInfoReady, rolenames });
+                for (let i = 0; i < payloadData.roles.length; i++) {
+                    roleIds.push(payloadData.roles[i].role_uuid);
+                }
+                this.setState({ userInfo: payloadData, userInfoReady, roleIds });
             }
         }
     }
@@ -174,28 +180,28 @@ class UserCard extends React.Component {
     };
 
     handleUserRoleChange = (values) => {
-        // TODO 后台增加接口，修改用户的角色，统一用一个接口，穿一个list
+        // TODO 后台增加接口，修改用户的角色，统一用一个接口，传一个list
         // TODO 后台这个接口，考虑只用role_name就ok 不要在前端保留role_uuid
         RestReq.asyncPost(this.changeUserGroupCB, '/unified-auth/account_manage/change-user-group', { uuid: this.props.uuid, user_group: values });
     }
 
-    userGroupSelect() {
-        const { userInfo, userInfoReady, rolenames } = this.state;
+    userRoleSelect = () => {
+        const { userInfo, userInfoReady, roleIds } = this.state;
         const userStore = this.props.userStore;
+        let roles = this.props.userRoleStore.roleArray;
         return (
             (this.props.manage === 1) && userInfoReady &&
             userStore.loginUser.uuid !== userInfo.uuid &&
-            <Select mode="multiple" value={rolenames} style={{ width: 400 }} onChange={this.handleUserRoleChange.bind(this)}>
-                <Option value='ROLE_ADMIN'>管理员</Option>
-                <Option value='ROLE_AUDITOR'>审计员</Option>
-                <Option value='ROLE_USER'>普通用户</Option>
-                <Option value='ROLE_OPERATOR'>操作员</Option>
-                <Option value='ROLE_GUEST'>游客</Option>
+            (roles !== undefined && roles.length > 0 ) &&
+            <Select mode="multiple" value={roleIds} style={{ width: 400 }} onChange={this.handleUserRoleChange.bind(this)}>
+                {roles.map(role => (
+                    <Option value={role.uuid}>{role.alias}</Option>
+                ))}
             </Select>
         );
     }
 
-    getUserStateInfo() {
+    getUserStateInfo = () => {
         const { userInfo } = this.state;
         if (userInfo.status === 1 && this.props.manage === 1) {
             return (
@@ -244,11 +250,11 @@ class UserCard extends React.Component {
         // but still need the element to resemble a link, use a button and change it with appropriate styles.
         return (
             <div>
-                <Card title={userInfo.name} extra={this.userGroupSelect()}>
+                <Card title={userInfo.name} extra={this.userRoleSelect()}>
                     <Card
                         type="inner"
                         title='基本信息'
-                        extra={this.getUserStateInfo()}
+                        extra={this.getUserStateInfo}
                     >
                         <Row>
                             <Col span={6}>
