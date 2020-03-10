@@ -237,7 +237,7 @@ class AssetMangeView extends React.Component {
         const userStore = this.props.userStore;
         return (
             <div>
-                <Skeleton loading={userStore.isAdminUser} active avatar>
+                <Skeleton loading={!userStore.isNormalUser} active avatar>
                     <Row>
                         <Col span={8}><Typography variant="h6">资产管理</Typography></Col>
                         <Col span={8} offset={8} align="right"><Button type="primary" size="large" onClick={this.handleNewAsset.bind(this)}><Icon type="plus-circle-o" />新建资产</Button></Col>

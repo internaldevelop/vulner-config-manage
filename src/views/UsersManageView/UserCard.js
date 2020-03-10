@@ -190,7 +190,7 @@ class UserCard extends React.Component {
         const userStore = this.props.userStore;
         let roles = this.props.userRoleStore.roleArray;
         return (
-            (this.props.manage === 1) && userInfoReady &&
+            (this.props.manage  === 1) && userInfoReady &&
             userStore.loginUser.uuid !== userInfo.uuid &&
             (roles !== undefined && roles.length > 0 ) &&
             <Select mode="multiple" value={roleIds} style={{ width: 400 }} onChange={this.handleUserRoleChange.bind(this)}>

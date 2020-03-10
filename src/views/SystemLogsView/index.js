@@ -19,7 +19,7 @@ const styles = theme => ({
     },
 });
 
-
+const DEFAULT_PAGE_SIZE = 10;
 @observer
 @inject('userStore')
 class SystemLogsView extends React.Component {
@@ -29,9 +29,12 @@ class SystemLogsView extends React.Component {
             resultData: [],
             scrollWidth: 1500,        // 表格的 scrollWidth
             scrollHeight: 1300,      // 表格的 scrollHeight
+            pageSize: DEFAULT_PAGE_SIZE,
+            currentPage: 1,     // Table中当前页码（从 1 开始）
+            totalResult: 0,
         }
 
-        this.querySystemLogs();
+        this.querySystemLogs(this.state.currentPage, this.state.pageSize);
     }
 
     componentDidMount() {
@@ -50,13 +53,13 @@ class SystemLogsView extends React.Component {
     }
 
     getAccountName(item, accountInfo) {
-        if (accountInfo !== undefined ) {
-            try{
+        if (accountInfo !== undefined) {
+            try {
                 let infoArrays = JSON.parse(accountInfo);
                 item.account_name = infoArrays.account_name;
                 item.account_alias = infoArrays.account_alias;
-            }catch(e) {
-                console.log('error：'+ e);
+            } catch (e) {
+                console.log('error：' + e);
                 return false;
             }
         }
@@ -64,24 +67,26 @@ class SystemLogsView extends React.Component {
 
     querySystemLogsCB = (data) => {
         if (data.payload.logs !== undefined) {
+            let startSet = (this.state.currentPage - 1) * this.state.pageSize;
             let logs = data.payload.logs.map((log, index) => {
                 let item = DeepClone(log);
                 // antd 表格的 key 属性复用 index
                 // 表格中索引列（后台接口返回数据中没有此属性）
-                item.index = index + 1;
-                item.key = index + 1;
+                //item.index = index + 1;
+                //item.key = index + 1;
+                item.index = startSet + index + 1;
+                item.key = startSet + index + 1;
                 item.level = this.getLogLevelMeaning(item.type);
                 this.getAccountName(item, log.account_info);
                 return item;
             });
-            this.setState({ resultData: logs });
+            this.setState({ resultData: logs, totalResult: data.payload.total });
         }
     }
 
-    querySystemLogs = () => {
-        // TODO, 用户名和用户名称需要联合查询用户表，当前接口没有此信息
-        // TODO, 后续需要实现分页功能
-        return RestReq.asyncGet(this.querySystemLogsCB, '/system-log/sys_log/search_by_filter', { offset: 0, count: 10}, { token: false });
+    querySystemLogs = (targetPage, pageSize) => {
+        let startSet = (targetPage - 1) * pageSize + 1;
+        return RestReq.asyncGet(this.querySystemLogsCB, '/system-log/sys_log/search_by_filter', { offset: startSet, count: pageSize }, { token: false });
     }
 
     logTypeArray() {
@@ -96,7 +101,7 @@ class SystemLogsView extends React.Component {
     getLogTypeMeaning(type) {
         if (type === 0) {
             return "登录";
-        } else if (type === 1 || type === 4 ) {
+        } else if (type === 1 || type === 4) {
             return "运行";
         } else if (type === 5 || type === 6) {
             return "告警";
@@ -193,29 +198,48 @@ class SystemLogsView extends React.Component {
         return tableColumns;
     }
 
-    onChange = () =>{
+    /**
+     * 将数据所在页的行索引转换成整个数据列表中的索引
+     * @param {} rowIndex 数据在表格当前页的行索引
+     */
+    transferDataIndex(rowIndex) {
+        // currentPage 为 Table 中当前页码（从 1 开始）
+        const { currentPage, pageSize } = this.state;
+        let dataIndex = (currentPage - 1) * pageSize + rowIndex;
+        return dataIndex;
+    }
 
+    /** 处理页面变化（页面跳转/切换/每页记录数变化） */
+    handlePageChange = (currentPage, pageSize) => {
+        this.setState({ currentPage, pageSize });
+        this.querySystemLogs(currentPage, pageSize);
     }
 
     getTableProps() {
-        const DEFAULT_PAGE_SIZE = 10;
-        const { scrollWidth, scrollHeight, resultData } = this.state;
-        let newScrollHeight = scrollHeight > 500 ? scrollHeight - 80 : scrollHeight;
+        const { totalResult, scrollWidth, scrollHeight, resultData } = this.state;
+        //let newScrollHeight = scrollHeight > 500 ? scrollHeight - 80 : scrollHeight;
+        let self = this;
 
         const tableProps = {
             columns: this.getTableColumns(),
             rowKey: record => record.uuid,
             dataSource: resultData,
-            onChange: this.onChange,
-            // scroll: { x: scrollWidth, y: newScrollHeight },
-            scroll: { y: newScrollHeight },
+            scroll: { x: scrollWidth, y: scrollHeight },
+            //scroll: { y: newScrollHeight },
             bordered: true,
             pagination: {
+                total: totalResult > 0 ? totalResult : 10,
                 showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
-                pageSizeOptions: [DEFAULT_PAGE_SIZE.toString(), '20', '50'],
+                pageSizeOptions: [DEFAULT_PAGE_SIZE.toString(), '20', '30', '40'],
                 defaultPageSize: DEFAULT_PAGE_SIZE,
-                showQuickJumper: true,
+                //showQuickJumper: true,
                 showSizeChanger: true,
+                onShowSizeChange(current, pageSize) {  //当几条一页的值改变后调用函数，current：改变显示条数时当前数据所在页；pageSize:改变后的一页显示条数
+                    self.handlePageChange(current, pageSize);
+                },
+                onChange(current, pageSize) {  //点击改变页数的选项时调用函数，current:将要跳转的页数
+                    self.handlePageChange(current, pageSize);
+                },
             }
         };
         return tableProps;
@@ -224,7 +248,7 @@ class SystemLogsView extends React.Component {
     render() {
         const userStore = this.props.userStore;
         return (
-            <Skeleton loading={userStore.isAdminUser} active avatar paragraph={{ rows: 12 }}>
+            <Skeleton loading={!userStore.isNormalUser} active avatar paragraph={{ rows: 12 }}>
                 <div style={{ minWidth: GetMainViewMinWidth(), minHeight: GetMainViewMinHeight() }}>
                     <Card title={'操作日志'} style={{ width: '100%', height: '100%' }}
                     >

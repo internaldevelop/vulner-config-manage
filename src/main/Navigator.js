@@ -12,6 +12,20 @@ const hostMenus = [
         ]
     },
     {
+        title: '漏洞库管理',
+        icon: 'project',
+        key: '/home/vulner-manage',
+        subs: [
+            { key: '/home/vulner-manage/info', title: '漏洞库信息管理', icon: 'exception', },
+            { key: '/home/vulner-stat', title: '漏洞利用库统计', icon: 'line-chart', },
+        ]
+    },
+    {
+        title: '性能监控',
+        icon: 'line-chart',
+        key: '/home/history-performance',
+    },
+    {
         title: '日志管理',
         icon: 'read',
         key: '/home/log-manage',

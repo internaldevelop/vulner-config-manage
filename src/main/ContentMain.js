@@ -11,6 +11,10 @@ import AboutView from '../views/AboutView'
 import AssetManageView from '../views/AssetManageView';
 import FirmwareFetchView from '../views/FirmwareFetchView';
 import CertFileGenerate from '../views/CertFileGenerate';
+import CertFileImport from '../views/CertFileImport';
+import PerformanceOverView from '../views/PerformanceOverView';
+import VulnerManageInfoView from '../views/VulnerManageView/VulnerManageInfoView'
+import VulnerStatisticsView from '../views/VulnerStatisticsView/VulnerStatisticsView'
 
 @withRouter
 class ContentMain extends React.Component {
@@ -33,6 +37,12 @@ class ContentMain extends React.Component {
 
         <PrivateRoute exact path='/home/firmware-analyze/fetch' component={FirmwareFetchView} />
         <PrivateRoute exact path='/home/certfile-manage/generate' component={CertFileGenerate} />
+        <PrivateRoute exact path='/home/certfile-manage/import' component={CertFileImport} />
+
+        <PrivateRoute exact path='/home/history-performance' component={PerformanceOverView} />
+
+        <PrivateRoute exact path='/home/vulner-manage/info' component={VulnerManageInfoView} />
+        <PrivateRoute exact path='/home/vulner-stat' component={VulnerStatisticsView} />
 
         <PrivateRoute exact path='/home/about' component={AboutView} />
 
