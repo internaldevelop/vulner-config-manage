@@ -15,6 +15,9 @@ import CertFileImport from '../views/CertFileImport';
 import PerformanceOverView from '../views/PerformanceOverView';
 import VulnerManageInfoView from '../views/VulnerManageView/VulnerManageInfoView'
 import VulnerStatisticsView from '../views/VulnerStatisticsView/VulnerStatisticsView'
+import CodeDisplayView from '../views/CodeDisplayView';
+import DataBackupView from '../views/DataBackupView';
+import DataRestoreView from '../views/DataRestoreView';
 
 @withRouter
 class ContentMain extends React.Component {
@@ -43,6 +46,11 @@ class ContentMain extends React.Component {
 
         <PrivateRoute exact path='/home/vulner-manage/info' component={VulnerManageInfoView} />
         <PrivateRoute exact path='/home/vulner-stat' component={VulnerStatisticsView} />
+
+        <PrivateRoute exact path='/home/code-display' component={CodeDisplayView} />
+
+        <PrivateRoute exact path='/home/sysadmin/backup' component={DataBackupView} />
+        <PrivateRoute exact path='/home/sysadmin/restore' component={DataRestoreView} />
 
         <PrivateRoute exact path='/home/about' component={AboutView} />
 

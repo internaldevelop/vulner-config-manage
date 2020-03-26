@@ -129,7 +129,7 @@ class RestReq {
     }
 
     _getBaseURL(baseUrlType) {
-        let baseUrl = '';
+        let baseUrl = 'http://localhost:10112';
 
         // 设定 REST 接口的 BaseUrl
         if (baseUrlType.length === 0) {

@@ -9,6 +9,7 @@
     "@svgr/webpack": "4.1.0",
     "@types/jest": "^24.0.25",
     "@types/node": "^13.1.1",
+    "@uiw/react-codemirror": "^2.2.1",
     "antd": "^3.16.6",
     "axios": "^0.18.0",
     "babel-core": "7.0.0-bridge.0",

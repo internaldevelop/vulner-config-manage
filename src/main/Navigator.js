@@ -40,6 +40,8 @@ const hostMenus = [
         subs: [
             { key: '/home/sysadmin/users', title: '用户管理', icon: 'contacts', },
             { key: '/home/sysadmin/personal', title: '个人资料', icon: 'user', },
+            { key: '/home/sysadmin/backup', title: '数据备份', icon: 'copy', },
+            { key: '/home/sysadmin/restore', title: '数据恢复', icon: 'rest', },
             { key: '/home/sysadmin/assets', title: '资产管理', icon: 'cluster', },
         ]
     },
@@ -51,6 +53,11 @@ const hostMenus = [
             { key: '/home/certfile-manage/generate', title: '授权文件生成', icon: 'export', },
             { key: '/home/certfile-manage/import', title: '授权文件导入', icon: 'import', },
         ]
+    },
+    {
+        title: '固件函数抽取',
+        icon: 'CodeOutlined',
+        key: '/home/code-display'
     },
     {
         title: '关于',

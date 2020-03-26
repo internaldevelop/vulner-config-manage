@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import { observer, inject } from 'mobx-react'
 import { Upload, message, DatePicker, Icon, Button, Skeleton, Select, Card, Row, Col } from 'antd'
-import { GetMainServerRootUrl } from '../../global/environment'
+import CertFileCard from '../CertFileGenerate/CertFileCard'
 
 import RestReq from '../../utils/RestReq';
 
@@ -33,6 +33,7 @@ let uploadFileContent = '';
 
 @inject('userStore')
 @inject('userRoleStore')
+@inject('certFileStore')
 @observer
 class CertFileImport extends React.Component {
     constructor(props) {
@@ -40,6 +41,16 @@ class CertFileImport extends React.Component {
         this.state = {
             fileList: [],
         }
+        this.initCertFileData();
+    }
+
+    initCertFileData = () => {
+        let certFileItem = {
+            selectUserUuid: '',
+            expireDate: '',
+            selectRoles: [],
+        };
+        this.props.certFileStore.initCertFileItem(certFileItem);
     }
 
     importCertFileCB = (data) => {
@@ -56,7 +67,7 @@ class CertFileImport extends React.Component {
             return;
         } else {
             // TODO 需要联调修改接口参数
-            RestReq.asyncGet(this.importCertFileCB, '/unified-auth/license/import?access_token=' + RestReq._getAccessToken() + '&uploadFileContent=' + uploadFileContent);
+            RestReq.asyncPost(this.importCertFileCB, '/unified-auth/license/import?access_token=' + RestReq._getAccessToken() + '&uploadFileContent=' + uploadFileContent);
         }
     }
 
@@ -71,46 +82,40 @@ class CertFileImport extends React.Component {
 
         const props = {
             name: 'file',
-            multiple: false,
-            action: 'https://www.mocky.io/v2/5cc8019d300000980a055e76',
-            onRemove: file => {
-                this.setState(state => {
-                    const index = state.fileList.indexOf(file);
-                    const newFileList = state.fileList.slice();
-                    newFileList.splice(index, 1);
-                    return {
-                        fileList: newFileList,
-                    };
-                });
+            multiple: true,
+            action: RestReq._getBaseURL('') + '/unified-auth/license/import',
+            data: {
+                access_token: RestReq._getAccessToken(),
             },
-            beforeUpload: file => {
-                this.setState(state => ({
-                    fileList: [...state.fileList, file],
-                }));
-
-                let reader = new FileReader();
-                reader.readAsText(file, "gbk");
-                reader.onload = function (oFREvent) {
-                    let pointsTxt = oFREvent.target.result;
-                    uploadFileContent = oFREvent.target.result;
+            onChange(info) {
+              const { status } = info.file;
+              if (status !== 'uploading') {
+                console.log(info.file, info.fileList);
+              }
+              if (status === 'done') {
+                if (info.file.response.code === 'ERROR_OK') {
+                    message.success(`${info.file.name} 授权成功.`);
+                } else {
+                    message.success(`${info.file.name} 授权失败：` + info.file.response.error);
                 }
-                return false;
+              } else if (status === 'error') {
+                message.error(`${info.file.name} 授权失败.`);
+              }
             },
-            fileList,
-        };
+          };
 
         return (
             <div>
                 <Skeleton loading={!userStore.isAdminUser} active avatar>
-                    <Row>
-                        <Col span={20} offset={2}>
-                            <Card title="授权文件导入">
+                    <Card title="授权文件导入">
+                        <Row>
+                            <Col span={10}>
                                 <div>
                                     <Dragger {...props}>
                                         <p className="ant-upload-drag-icon">
                                             <Icon type="inbox" />
                                         </p>
-                                        <p className="ant-upload-text">点击选择或者拖拽授权文件</p>
+                                        <p className="ant-upload-text">点击选择或者拖拽授权文件到这里</p>
                                         {/* <p className="ant-upload-hint">
                                             Support for a single or bulk upload. Strictly prohibit from uploading company data or other
                                             band files
@@ -118,11 +123,15 @@ class CertFileImport extends React.Component {
                                     </Dragger>
                                     <br />
                                     <br />
-                                    <div align="center"><Button type="primary" size="large" onClick={this.importCertFile.bind(this)}><Icon type="import" />授权文件导入</Button></div>
                                 </div>
-                            </Card>
-                        </Col>
-                    </Row>
+                            </Col>
+                            <Col span={12} offset={2}>
+                                <CertFileCard />
+                            </Col>
+                        </Row>
+                        <br />
+                        {/* <div align="center"><Button type="primary" size="large" onClick={this.importCertFile.bind(this)}><Icon type="import" />授权文件导入</Button></div> */}
+                    </Card>
                 </Skeleton>
             </div>
         )

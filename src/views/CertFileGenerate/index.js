@@ -6,6 +6,7 @@ import { message, DatePicker, Icon, Button, Skeleton, Select, Card, Row, Col } f
 import { GetMainServerRootUrl } from '../../global/environment'
 
 import RestReq from '../../utils/RestReq';
+import CertFileCard from './CertFileCard';
 
 
 const styles = theme => ({
@@ -25,51 +26,31 @@ const styles = theme => ({
 const Option = Select.Option;
 
 @inject('userStore')
-@inject('userRoleStore')
+@inject('certFileStore')
 @observer
 class CertFileGenerate extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            users: [],
-            selectUserUuid: '',
-            selectRoles: [],
-            expireDate: '',
         }
-        this.getUsers();
+        this.initCertFileData();
     }
 
-    componentWillMount() {
-        // 加载用户角色
-        this.props.userRoleStore.loadAllRoles();
+    initCertFileData = () => {
+        let certFileItem = {
+            selectUserUuid: '',
+            expireDate: this.getNowTime(),
+            selectRoles: [],
+        };
+        this.props.certFileStore.initCertFileItem(certFileItem);
     }
 
-    getUsersCB = (data) => {
-        this.setState({
-            users: data.payload,
-            selectedAccID: 0,
-        });
-    }
-
-    getUsers() {
-        const userStore = this.props.userStore;
-        RestReq.asyncGet(this.getUsersCB, '/unified-auth/account_manage/all');
-    }
-
-    handleSelectUser = event => {
-        this.setState({ selectUserUuid: event.target.value });
-    }
-
-    handleSelectUser = event => {
-        this.setState({ selectUserUuid: event.target.value });
-    }
-
-    handleDateChange = (date, dateString) => {
-        this.setState({ expireDate: dateString });
-    }
-
-    handleUserRoleChange = (values) => {
-        this.setState({ selectRoles: values });
+    getNowTime = () => {
+        let now = new Date();
+        let month = (10 > (now.getMonth() + 1)) ? '0' + (now.getMonth() + 1) : now.getMonth() + 1;
+        let day = (10 > now.getDate()) ? '0' + now.getDate() : now.getDate();
+        let today = now.getFullYear() + '-' + month + '-' + day;
+        return today + ' 00:00:00';
     }
 
     getCertFileCB = (data) => {
@@ -77,16 +58,17 @@ class CertFileGenerate extends React.Component {
     }
 
     getCertFile = event => {
+        const {selectUserUuid, expireDate, selectRoles}  = this.props.certFileStore.certFileItem;
         // 调接口生成授权文件
-        if (this.state.expireDate === '') {
+        if (expireDate === '' || expireDate === undefined) {
             message.info("授权到期日期不能为空");
             return;
         } else {
-            if (this.state.selectRoles.length > 0) {
-                window.location.href = GetMainServerRootUrl() + '/unified-auth/license/create?expire_time=' + this.state.expireDate + '&access_token=' + RestReq._getAccessToken() + '&sign=1' + '&role_uuids=' + this.state.selectRoles.toString() + '&account_uuid=' + this.state.selectUserUuid;
+            if (selectRoles.length > 0) {
+                window.location.href = GetMainServerRootUrl() + '/unified-auth/license/create?expire_time=' + expireDate + '&access_token=' + RestReq._getAccessToken() + '&sign=1' + '&role_uuids=' + selectRoles.toString() + '&account_uuid=' + selectUserUuid;
                 //RestReq.asyncGet(this.getCertFileCB, '/unified-auth/license/create', {expire_time: this.state.expireDate, sign: 1, role_uuids: this.state.selectRoles.toString, account_uuid: this.state.selectUserUuid});
             } else {
-                window.location.href = GetMainServerRootUrl() + '/unified-auth/license/create?expire_time=' + this.state.expireDate + '&access_token=' + RestReq._getAccessToken() + '&sign=0' + '&account_uuid=' + this.state.selectUserUuid;
+                window.location.href = GetMainServerRootUrl() + '/unified-auth/license/create?expire_time=' + expireDate + '&access_token=' + RestReq._getAccessToken() + '&sign=0' + '&account_uuid=' + selectUserUuid;
                 //RestReq.asyncGet(this.getCertFileCB, '/unified-auth/license/create', {expire_time: this.state.expireDate, sign: 0, account_uuid: this.state.selectUserUuid});
             }
         }
@@ -94,9 +76,7 @@ class CertFileGenerate extends React.Component {
 
     render() {
         const { classes } = this.props;
-        const { users } = this.state;
         const userStore = this.props.userStore;
-        let roles = this.props.userRoleStore.roleArray;
         return (
             <div>
                 <Skeleton loading={!userStore.isAdminUser} active avatar>
@@ -104,7 +84,8 @@ class CertFileGenerate extends React.Component {
                         <Col span={20} offset={2}>
                             <Card title="授权文件生成">
                                 <div>
-                                    <Row>
+                                    <CertFileCard manage={1} />
+                                    {/* <Row>
                                         <Col span={4}>
                                             {"请选择用户："}
                                         </Col>
@@ -137,7 +118,7 @@ class CertFileGenerate extends React.Component {
                                         <Col span={4} >
                                             <DatePicker placeholder="选择日期" style={{ width: 200 }} onChange={this.handleDateChange} />
                                         </Col>
-                                    </Row>
+                                    </Row>*/}
                                     <br />
                                     <br />
                                     <Row>
@@ -152,7 +133,6 @@ class CertFileGenerate extends React.Component {
                 </Skeleton>
             </div>
         )
-
     }
 }
 
