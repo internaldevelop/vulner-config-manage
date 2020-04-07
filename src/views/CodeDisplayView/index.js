@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types';
-import { Spin, Card, Tree, Upload, Table, Skeleton, Select, Icon, Button, Row, Col, message, Progress } from 'antd'
+import { Input, List, Spin, Card, Tree, Upload, Avatar, Table, Skeleton, Select, Icon, Button, Row, Col, message, Progress } from 'antd'
 import FormControl from '@material-ui/core/FormControl';
 import FormLabel from '@material-ui/core/FormLabel';
 import { withStyles } from '@material-ui/core/styles';
@@ -28,7 +28,13 @@ import 'codemirror/mode/http/http'
 import 'codemirror/mode/sql/sql'
 import 'codemirror/mode/vue/vue'
 import 'codemirror/mode/xml/xml'
+import InfiniteScroll from 'react-infinite-scroller';
 
+let socket = null;
+const Option = Select.Option;
+const DEFAULT_PAGE_SIZE = 10;
+const { Search } = Input;
+const FUNCTION_TREE_HEIGHT = 300;
 const styles = theme => ({
     iconButton: {
         margin: 0,
@@ -45,11 +51,24 @@ const styles = theme => ({
         marginBottom: 0,
         marginTop: 0,
     },
+    infiniteContainer: {
+        border: 1,
+        borderColor: '#e8e8e8',
+        borderRadius: 4,
+        borderHeight: 300,
+        overflow: 'auto',
+        height: FUNCTION_TREE_HEIGHT,
+    },
+    loadingContainer: {
+        position: 'absolute',
+        bottom: 40,
+        width: 100,
+        textAlign: 'center',
+    },
+    treeSearchStyle: {
+        color: '#f50',
+    },
 });
-
-let socket = null;
-const Option = Select.Option;
-const DEFAULT_PAGE_SIZE = 10;
 
 @inject('userStore')
 @observer
@@ -67,7 +86,8 @@ class CodeDisplayView extends React.Component {
             columns: Column,
             firmwareList: [],
             firmwareFunctionList: [],
-            functionTreeData: [],
+            functionTreeData: [],// 保存函数的树形结构
+            functionsListData: [],// 保存所有函数的key/title值，线性结构 目前两者一样，是因为函数只有一层，后面抽取的文件系统结构会是完整的树状结构
             totalResult: 0,
             selectedFirmwareId: '',
             selectedFirmwareTaskId: '',
@@ -76,6 +96,11 @@ class CodeDisplayView extends React.Component {
             scrollWidth: 1000,        // 表格的 scrollWidth
             scrollHeight: 400,      // 表格的 scrollHeight
             percentage: 0,
+            loading: false,
+            hasMore: true,
+            expandedKeys: [],
+            searchValue: '',
+            autoExpandParent: true,
         }
         // 设置操作列的渲染
         this.initActionColumn();
@@ -209,16 +234,48 @@ class CodeDisplayView extends React.Component {
         // 从行索引转换成实际的数据索引
         let dataIndex = this.transferDataIndex(rowIndex);
         const firmware = this.state.firmwareList[dataIndex];
-        if (firmware.task_id === undefined) {
-            this.getAsyncFunction(firmware);
+        // if (firmware.task_id === undefined) {
+        //     this.getAsyncFunction(firmware);
+        // }
+        this.getFunctions(firmware);
+    }
+
+    getFunctions = (firmware) => {
+        if (firmware !== null) {
+            // 根据firmware查询返回所有的函数 中间函数 汇编函数等
+            RestReq.asyncGet(this.getFunctionsCB, '/firmware-analyze/fw_analyze/functions', { file_id: firmware.firmware_id, }, { token: false });
+            this.setState({ selectedFirmwareId: firmware.firmware_id, percentage: 0, functionTreeData: [], functionsListData: [], asmCode: '', vexCode: '' });
+            //message.info("开始抽取函数");
         }
+    }
+
+    getFunctionsCB = (data) => {
+        let functions = [];
+        if (data.code !== 'ERROR_OK')
+            return;
+
+        let functionTreeData = this.state.functionTreeData;
+        let functionsListData = this.state.functionsListData;
+        let expandedKeys = this.state.expandedKeys;
+        functions = data.payload.functions.map((item, index) => {
+            let functionItem = DeepClone(item);
+            functionItem.index = index + 1;
+            functionItem.key = index + 1;
+            let treeDataitem = { title: functionItem.name, key: functionItem.addr, };
+            //let expandedKeyItem = { key: functionItem.addr,}
+            functionTreeData.push(treeDataitem);
+            functionsListData.push(treeDataitem);
+            expandedKeys.push(functionItem.addr);
+            return functionItem;
+        })
+        this.setState({ firmwareFunctionList: functions, functionTreeData, functionsListData, expandedKeys, percentage: 100 });
     }
 
     getAsyncFunction = (firmware) => {
         if (firmware !== null) {
             // 根据firmware查询返回所有的函数 中间函数 汇编函数等
             RestReq.asyncGet(this.getAsyncFunctionsCB, '/firmware-analyze/fw_analyze/async_funcs/list', { file_id: firmware.firmware_id, }, { token: false });
-            this.setState({ selectedFirmwareId: firmware.firmware_id, percentage: 0, functionTreeData: [], code: '' });
+            this.setState({ selectedFirmwareId: firmware.firmware_id, percentage: 0, functionTreeData: [], functionsListData: [], code: '' });
             message.info("开始抽取函数");
         }
     }
@@ -304,6 +361,15 @@ class CodeDisplayView extends React.Component {
         return null;
     }
 
+    constructListData = (functions) => {
+        let methods = [];
+        for (let fun of functions) {
+            let item = { name: fun.name, key: fun.addr, };
+            methods.push(item);
+        }
+        return methods;
+    }
+
     constructTreeData = (functions) => {
         let methods = [];
         for (let fun of functions) {
@@ -335,50 +401,50 @@ class CodeDisplayView extends React.Component {
             return;
 
         if (data.code === 'ERROR_OK' && data.payload.percentage < 100) {
-            this.setState({ percentage: data.payload.percentage, functionTreeData: [] });
+            this.setState({ percentage: data.payload.percentage, functionTreeData: [], functionsListData: [], });
             message.info("函数抽取进度：" + data.payload.percentage);
             return;
         }
+        let functionTreeData = this.state;
+        let functionsListData = this.state;
+        let expandedKeys = this.state;
         functions = data.payload.result.functions.map((item, index) => {
             let functionItem = DeepClone(item);
             functionItem.index = index + 1;
             functionItem.key = index + 1;
+            let treeDataitem = { title: functionItem.name, key: functionItem.addr, };
+            //let expandedKeyItem = { key: functionItem.addr,}
+            functionTreeData.push(treeDataitem);
+            functionsListData.push(treeDataitem);
+            expandedKeys.push(functionItem.addr);
             return functionItem;
         })
-        this.setState({ firmwareFunctionList: functions, functionTreeData: this.constructTreeData(functions), percentage: 100 });
+        this.setState({ firmwareFunctionList: functions, functionTreeData, functionsListData, expandedKeys, percentage: 100 });
     }
 
     selectRow = (rowData) => {
         let firmware = this.getFirmwareInfo(rowData);
         if (firmware !== null) {
-            if (firmware.task_id === undefined) {
-                this.getAsyncFunction(firmware);
-            } else {
-                if (firmware.firmware_id === this.state.selectedFirmwareId && this.state.percentage === 100) {
-                    return;
-                }
-                // 根据firmware查询返回所有的函数 中间函数 汇编函数等
-                RestReq.asyncGet(this.getAllFunctionTaskInfoCB, '/firmware-analyze/fw_analyze/task_result', { task_id: firmware.task_id, }, { token: false });
-                this.setState({ selectedFirmwareId: firmware.firmware_id });
-            }
+            this.getFunctions(firmware);
+            // if (firmware.task_id === undefined) {
+            //     this.getAsyncFunction(firmware);
+            // } else {
+            //     if (firmware.firmware_id === this.state.selectedFirmwareId && this.state.percentage === 100) {
+            //         return;
+            //     }
+            //     // 根据firmware查询返回所有的函数 中间函数 汇编函数等
+            //     RestReq.asyncGet(this.getAllFunctionTaskInfoCB, '/firmware-analyze/fw_analyze/task_result', { task_id: firmware.task_id, }, { token: false });
+            //     this.setState({ selectedFirmwareId: firmware.firmware_id });
+            // }
         }
     }
 
-    // getFunctionCodeCB = (data) => {
-    //     if (data.code !== 'ERROR_OK' || data.payload === undefined) {
-    //         this.setState({ code: '' });
-    //         return;
-    //     }
-    //     // 根据method去后台取对应的函数代码
-    //     this.setState({ code: data.payload });
-    // }
-
     getFunctionCodeCB = (data) => {
-        if (data.code !== 'ERROR_OK' || data.payload.percentage === undefined || data.payload.percentage < 100) {
+        if (data.code !== 'ERROR_OK') {
             return;
         }
         // 根据method去后台取对应的函数代码
-        this.setState({ vexCode: data.payload.result.vex, asmCode: data.payload.result.asm, });
+        this.setState({ vexCode: data.payload.vex, asmCode: data.payload.asm, });
     }
 
     getAyncFunctionCodeCB = (data) => {
@@ -392,15 +458,91 @@ class CodeDisplayView extends React.Component {
 
     onSelectMethod = (selectedKeys, info) => {
         if (selectedKeys.length > 0) {
-            if (this.state.selectedFirmwareFunctionId !== selectedKeys[0]) {
-                const firmware_id = this.state.selectedFirmwareId;
-                RestReq.asyncGet(this.getAyncFunctionCodeCB, '/firmware-analyze/fw_analyze/async_funcs/func_info', { file_id: firmware_id, func_addr: selectedKeys[0] }, { token: false });
-                this.setState({ selectedFirmwareFunctionId: selectedKeys[0] });
-            } else {
-                RestReq.asyncGet(this.getFunctionCodeCB, '/firmware-analyze/fw_analyze/task_result', { task_id: this.state.selectedFirmwareFunctionTaskId }, { token: false });
+            const firmware_id = this.state.selectedFirmwareId;
+            // if (this.state.selectedFirmwareFunctionId !== selectedKeys[0]) {
+            //     RestReq.asyncGet(this.getAyncFunctionCodeCB, '/firmware-analyze/fw_analyze/async_funcs/func_info', { file_id: firmware_id, func_addr: selectedKeys[0] }, { token: false });
+            //     this.setState({ selectedFirmwareFunctionId: selectedKeys[0] });
+            // } else {
+            //     RestReq.asyncGet(this.getFunctionCodeCB, '/firmware-analyze/fw_analyze/task_result', { task_id: this.state.selectedFirmwareFunctionTaskId }, { token: false });
+            // }
+            RestReq.asyncGet(this.getFunctionCodeCB, '/firmware-analyze/fw_analyze/cfg/func_info', { file_id: firmware_id, func_addr: selectedKeys[0] });
+            this.setState({ selectedFirmwareFunctionId: selectedKeys[0] });
+        }
+    }
+
+    selectMethod = (event, selectedKey) => {
+        if (selectedKey !== undefined) {
+            RestReq.asyncGet(this.getFunctionCodeCB, '/firmware-analyze/fw_analyze/functions/asm', { file_id: this.state.selectedFirmwareId, func_addr: selectedKey }, { token: false });
+        }
+    }
+
+    onExpand = expandedKeys => {
+        this.setState({
+            expandedKeys,
+            autoExpandParent: true,
+        });
+    };
+
+    getParentKey = (key, tree) => {
+        let parentKey = key;
+        for (let i = 0; i < tree.length; i++) {
+            const node = tree[i];
+            if (node.children) {
+                if (node.children.some(item => item.key === key)) {
+                    parentKey = node.key;
+                } else if (this.getParentKey(key, node.children)) {
+                    parentKey = this.getParentKey(key, node.children);
+                }
             }
         }
-        //RestReq.asyncGet(this.getFunctionCodeCB, '/firmware-analyze/fw_analyze/functions/asm', { file_id: this.state.selectedFirmwareId, func_addr: selectedKeys[0] }, { token: false });
+        return parentKey;
+    };
+
+    onMethodInputChange = e => {
+        const { value } = e.target;
+        // const expandedKeys = this.state.functionsListData
+        //     .map(item => {
+        //         if (item.title.indexOf(value) > -1) {
+        //             return this.getParentKey(item.key, this.state.functionTreeData);
+        //         }
+        //         return null;
+        //     })
+        //     .filter((item, i, self) => item && self.indexOf(item) === i);
+        this.setState({
+            //expandedKeys,
+            searchValue: value,
+            autoExpandParent: true,
+        });
+    };
+
+    scrollFunctionTree = () => {
+        const { searchValue, functionTreeData } = this.state;
+        if (document.getElementById('functionTree') !== undefined && searchValue === ''){
+            document.getElementById('functionTree').scrollTop = 0;
+        }
+        let scrollValue = 0;
+        let scrollHeight = document.getElementById('functionTree').scrollHeight;
+        for (let index in functionTreeData) {
+            if (functionTreeData[index].title.indexOf(searchValue) > -1) {
+                scrollValue = (parseInt)(((parseFloat(index)) / functionTreeData.length) * scrollHeight);
+                break;
+            }
+        }
+        if (document.getElementById('functionTree') !== undefined && scrollValue >= 0) {
+            document.getElementById('functionTree').scrollTop = scrollValue; //通过scrollTop设置滚动到指定位置
+        }
+    }
+
+    getGraphInfoCB = (data) => {
+        if (data.code !== 'ERROR_OK') {
+            return;
+        }
+    }
+
+    getGraphInfo = () => {
+        const firmware_id = this.state.selectedFirmwareId;
+        const method_id = this.state.selectedFirmwareFunctionId;
+        RestReq.asyncGet(this.getGraphInfoCB, '/firmware-analyze/fw_analyze/cfg/call_graph_a', { file_id: firmware_id, func_addr: method_id });
     }
 
     render() {
@@ -428,12 +570,41 @@ class CodeDisplayView extends React.Component {
             gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
         };
 
-        const { totalResult, columns, firmwareList, functionTreeData, scrollWidth, scrollHeight } = this.state;
+        const { searchValue, expandedKeys, autoExpandParent, totalResult, columns, firmwareList, functionTreeData, scrollWidth, scrollHeight } = this.state;
         const { classes } = this.props;
         const userStore = this.props.userStore;
 
         const { fileList } = this.state;
         let self = this;
+
+        const loop = data =>
+            data.map(item => {
+                const index = item.title.indexOf(searchValue);
+                const beforeStr = item.title.substr(0, index);
+                const afterStr = item.title.substr(index + searchValue.length);
+                const title =
+                    index > -1 ? (
+                        <span>
+                            {beforeStr}
+                            <span style={{ color: 'red' }}>{searchValue}</span>
+                            {afterStr}
+                        </span>
+                    ) : (
+                            <span>{item.title}</span>
+                        );
+                if (item.children) {
+                    return { title, key: item.key, children: loop(item.children) };
+                }
+
+                return {
+                    title,
+                    key: item.key,
+                };
+            });
+
+        if (functionTreeData.length > 0) {
+            this.scrollFunctionTree();
+        }
 
         const props = {
             onRemove: file => {
@@ -495,60 +666,63 @@ class CodeDisplayView extends React.Component {
                             })}
                         />
                     </FormControl>
-                    {/* {this.isVisibleProgress() &&
-                        <div style={{ marginLeft: 10, width: '60%' }}>
-                            <FormLabel component="legend">函数抽取进度</FormLabel>
-                            <Progress percent={this.state.percentage} strokeWidth='15px' strokeColor={{ '0%': '#108ee9', '100%': '#87d068', }} />
-                        </div>} */}
-
-                    {/* <Row style={{ marginTop: 10 }}>
-                        <Col span={3} style={{ marginTop: 5 }}>
-                            {"选择代码类型："}
-                        </Col>
-                        <Col span={4} >
-                            <Select style={{ width: 200 }} onChange={this.changeMode.bind(this)} value={this.state.mode}>
-                                <Option value="markdown">Markdown</Option>
-                                <Option value="javascript">JavaScript</Option>
-                                <Option value="python">python</Option>
-                            </Select>
-                        </Col>
-                        <Col span={11} offset={2}>
-                            <Upload {...props} >
-                                <Button>
-                                    <Icon type="upload" /> 选择文件
-                        </Button>
-                            </Upload>
-                        </Col>
-                    </Row> */}
                     <br />
 
-                    <Row style={{ marginTop: 10 }}>
-                        <Col span={4} >
-                            <Tree
-                                defaultExpandAll={true}
-                                defaultExpandedKeys={['methodList']}
-                                onSelect={this.onSelectMethod}
-                                treeData={functionTreeData}
-                            />
+                    <Row style={{ marginTop: 10, width: scrollWidth + 10 }}>
+                        <Col span={6} >
+                            <Search id='searchInput' placeholder="函数搜索" onChange={this.onMethodInputChange} />
+                            <div id='functionTree' className={classes.infiniteContainer}>
+                                <Tree
+                                    onSelect={this.onSelectMethod}
+                                    onExpand={this.onExpand}
+                                    expandedKeys={expandedKeys}
+                                    autoExpandParent={autoExpandParent}
+                                    treeData={loop(functionTreeData)}
+                                />
+                            </div>
+                            {/* <div className={classes.infiniteContainer}>
+                                <InfiniteScroll
+                                    initialLoad={false}
+                                    pageStart={0}
+                                    //loadMore={this.handleInfiniteOnLoad}
+                                    //hasMore={!this.state.loading && this.state.hasMore}
+                                    useWindow={false}
+                                >
+                                    <List
+                                        dataSource={functionTreeData}
+                                        renderItem={item => (
+                                            <List.Item key={item.key} onClick={event => this.selectMethod(event, item.key)}>
+                                                {item.name}
+                                            </List.Item>
+                                        )}
+                                    >
+                                        {this.state.loading && this.state.hasMore && (
+                                            <div className={classes.loadingContainer}>
+                                                <Spin />
+                                            </div>
+                                        )}
+                                    </List>
+                                </InfiniteScroll>
+                            </div> */}
                         </Col>
-                        <Col span={18} offset={2}>
-                        {this.state.asmCode === '' && this.state.selectedFirmwareFunctionId !== '' && <Spin style={{ marginTop: 50, marginLeft: 50 }} tip="Loading..."></Spin>}
+                        <Col span={16} offset={2}>
+                            {/* {this.state.asmCode === '' && this.state.selectedFirmwareFunctionId !== '' && <Spin style={{ marginTop: 50, marginLeft: 50 }} tip="Loading..."></Spin>} */}
                             {this.state.asmCode !== ''
                                 && <Card title="汇编代码">
                                     <CodeMirror ref="editor" value={this.state.asmCode} /*onChange={this.updateCode}*/ options={optionsAsm} />
                                 </Card>
-                                // && <div>
-                                //     <p>汇编代码</p>
-                                //     <CodeMirror ref="editor" value={this.state.asmCode} /*onChange={this.updateCode}*/ options={optionsAsm} />
-                                // </div>
                             }
                             {this.state.vexCode !== ''
-                                // && <div>
-                                //     <p>中间代码</p>
-                                //     <CodeMirror ref="editor" value={this.state.vexCode} /*onChange={this.updateCode}*/ options={optionsVex} />
-                                // </div>
                                 && <Card title="中间代码">
                                     <CodeMirror ref="editor" value={this.state.vexCode} /*onChange={this.updateCode}*/ options={optionsVex} />
+                                </Card>
+                            }
+                            {this.state.vexCode !== ''
+                                && <Card title="函数流程图" extra={
+                                    <div>
+                                        <a onClick={this.getGraphInfo.bind(this)}>详细</a>
+                                    </div>
+                                }>      
                                 </Card>
                             }
                         </Col>

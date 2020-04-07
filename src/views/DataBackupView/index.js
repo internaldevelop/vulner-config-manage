@@ -2,11 +2,12 @@ import React from 'react'
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import { observer, inject } from 'mobx-react'
-import { Modal, message, Skeleton, Select, Card, Row, Col, Switch, Form } from 'antd'
-import HttpRequest from '../../utils/HttpRequest';
-import { userType } from '../../global/enumeration/UserType';
-import { errorCode } from '../../global/error';
-import { eng2chn } from '../../utils/StringUtils'
+import FormControl from '@material-ui/core/FormControl';
+import FormLabel from '@material-ui/core/FormLabel';
+import { Input, Table, Skeleton, Select, Card, Row, Col, Switch, Button, Icon } from 'antd'
+import { columns as Column } from './Column'
+import RestReq from '../../utils/RestReq';
+import { GetMainViewMinHeight, GetMainViewMinWidth } from '../../utils/PageUtils'
 
 const styles = theme => ({
     iconButton: {
@@ -34,229 +35,137 @@ const styles = theme => ({
 });
 
 const Option = Select.Option;
-
+const DEFAULT_PAGE_SIZE = 10;
 @inject('userStore')
 @observer
 class DataBackupView extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            isModifyDetails: false, // false 表示只读状态，true 表示正在修改中，可以保存
+            selectedRowKeys: [], // Check here to configure the default column
             users: [],
-            mailToManagerAddress: '',
-            mailToManagerUuid: '',
-            mailToManagerOnOff: '',
-            mailToUserOnOff: '',
-            existManagerMail: false,
-            existUserOnOff: false,
+            columns: Column,
+            pageSize: DEFAULT_PAGE_SIZE,
+            scrollWidth: 800,        // 表格的 scrollWidth
+            scrollHeight: 200,      // 表格的 scrollHeight
+            logOnOff: 'on',
         }
-        this.getSystemConfig();
-    }
-
-    getSystemConfigCB = (data) => {
-        // 检查响应的payload数据是数组类型
-        if (!(data.payload instanceof Array))
-            return;
-
-        let mailToManagerAddress = '';
-        let mailToManagerUuid = '';
-        let existManagerMail = false;
-        let existUserOnOff = false;
-        let mailToManagerOnOff = 'off';
-        let mailToUserOnOff = 'off';
-        for (let config of data.payload) {
-            let name = config.name;
-            if (name !== '') {
-                if (name === 'mail-to-manager-address') {
-                    existManagerMail = true;
-                    mailToManagerAddress = config.value;
-                } else if (name === 'mail-to-manager-on-off') {
-                    existManagerMail = true;
-                    mailToManagerOnOff = config.value;
-                } else if (name === 'mail-to-manager-uuid') {
-                    existManagerMail = true;
-                    mailToManagerUuid = config.value;
-                } else if (name === 'mail-to-user-on-off') {
-                    existUserOnOff = true;
-                    mailToUserOnOff = config.value;
-                }
-            }
-        }
-        this.setState({ existUserOnOff, existManagerMail, mailToManagerAddress, mailToManagerUuid, mailToManagerOnOff, mailToUserOnOff, });
         this.getUsers();
     }
 
-    getSystemConfig() {
-        HttpRequest.asyncGet(this.getSystemConfigCB, '/system-config/all');
-    }
-
     getUsersCB = (data) => {
-        let users = [];
-        let mailToManagerAddress = this.state.mailToManagerAddress;
-        let mailToManagerUuid = this.state.mailToManagerUuid;
-        // 检查响应的payload数据是数组类型
-        if (!(data.payload instanceof Array))
-            return;
-
-        for (let user of data.payload) {
-            if (user.email !== null && user.email !== '' && user.user_group === userType.TYPE_ADMINISTRATOR) {
-                if (mailToManagerUuid === '') {
-                    mailToManagerAddress = user.email;
-                    mailToManagerUuid = user.uuid;
-                } else if (mailToManagerUuid === user.uuid) {
-                    mailToManagerAddress = user.email;
-                }
-                users.push(user);
-            }
-        }
-        this.setState({ users, mailToManagerAddress, mailToManagerUuid });
+        this.setState({
+            users: data.payload,
+        });
     }
 
     getUsers() {
-        HttpRequest.asyncGet(this.getUsersCB, '/users/all');
+        RestReq.asyncGet(this.getUsersCB, '/unified-auth/account_manage/all');
     }
 
     handleSelectManager = (value) => {
         const { users } = this.state;
         for (let user of users) {
             if (user.uuid === value) {
-                this.setState({ mailToManagerAddress: user.email, mailToManagerUuid: value });
                 break;
             }
         }
     }
 
-    getDefaultMailManagerChecked = () => {
-        const mailToManagerOnOff = this.state.mailToManagerOnOff;
-        if (mailToManagerOnOff !== '' && mailToManagerOnOff === 'on') {
-            return true;
-        }
-        return false;
+    getLogValue = () => {
+        // TODO get log value from server
+        return (this.state.logOnOff === 'on' ? true : false);
     }
 
-    handleMailManagerSwitchConfig = (checked, event) => {
-        let mailToManagerOnOff = checked ? 'on' : 'off';
-        this.setState({ mailToManagerOnOff });
+    handleLogSwitch = (checked, event) => {
+        const logOnOff = checked ? 'on' : 'off';
+        this.setState({ logOnOff });
     }
 
-    getDefaultMailUserChecked = () => {
-        const mailToUserOnOff = this.state.mailToUserOnOff;
-        if (mailToUserOnOff !== '' && mailToUserOnOff === 'on') {
-            return true;
-        }
-        return false;
+    onSelectChange = selectedRowKeys => {
+        console.log('selectedRowKeys changed: ', selectedRowKeys);
+        this.setState({ selectedRowKeys });
+    };
+
+    getDefaultFileName = () => {
+        let now = new Date();
+        let month = (10 > (now.getMonth() + 1)) ? '0' + (now.getMonth() + 1) : now.getMonth() + 1;
+        let day = (10 > now.getDate()) ? '0' + now.getDate() : now.getDate();
+        let today = now.getFullYear() + month + day;
+        return 'back' + today;
     }
 
-    handleMaileUserSwitchConfig = (checked, event) => {
-        let mailToUserOnOff = checked ? 'on' : 'off';
-        this.setState({ mailToUserOnOff });
+    handleFileChange = (value) => {
+        // 
     }
 
-    requestSystemConfigCB = (action) => (data) => {
-        let successInfo;
-        if (data.code === errorCode.ERROR_OK) {
-            if (action === 'new') {
-                successInfo = "系统配置添加成功";
-                message.info(successInfo);
-            } else if (action === 'update') {
-                successInfo = "系统配置更新成功";
-                message.info(successInfo);
-            }
-        } else {
-            Modal.error({
-                title: '数据更新失败',
-                content: eng2chn(data.error),
-            });
-        }
-    }
-
-    modifyDetails = () => {
-        const { existUserOnOff, existManagerMail, mailToManagerAddress, mailToManagerUuid, mailToManagerOnOff, mailToUserOnOff } = this.state;
-        if (this.state.isModifyDetails) {
-            if (existManagerMail) {
-                HttpRequest.asyncPost(this.requestSystemConfigCB(''), '/system-config/update', { name: 'mail-to-manager-on-off', value: mailToManagerOnOff, });
-                HttpRequest.asyncPost(this.requestSystemConfigCB(''), '/system-config/update', { name: 'mail-to-manager-address', value: mailToManagerAddress });
-                HttpRequest.asyncPost(this.requestSystemConfigCB('update'), '/system-config/update', { name: 'mail-to-manager-uuid', value: mailToManagerUuid });
-            } else {
-                existManagerMail = true;
-                HttpRequest.asyncPost(this.requestSystemConfigCB(''), '/system-config/add', { name: 'mail-to-manager-on-off', value: mailToManagerOnOff, });         
-                HttpRequest.asyncPost(this.requestSystemConfigCB(''), '/system-config/add', { name: 'mail-to-manager-address', value: mailToManagerAddress });
-                HttpRequest.asyncPost(this.requestSystemConfigCB('new'), '/system-config/add', { name: 'mail-to-manager-uuid', value: mailToManagerUuid });
-            }
-
-            if (existUserOnOff) {
-                HttpRequest.asyncPost(this.requestSystemConfigCB(''), '/system-config/update', { name: 'mail-to-user-on-off', value: mailToUserOnOff, });
-            } else {
-                existUserOnOff = true;
-                HttpRequest.asyncPost(this.requestSystemConfigCB(''), '/system-config/add', { name: 'mail-to-user-on-off', value: mailToUserOnOff, });
-            }
-        }
-        this.setState({ isModifyDetails: !this.state.isModifyDetails });
+    saveData = () => {
+        // TODO save data
     }
 
     render() {
         const { classes } = this.props;
-        const { users, mailToManagerAddress, mailToManagerUuid, } = this.state;
+        const { selectedRowKeys, scrollWidth, scrollHeight, columns, users, } = this.state;
         const userStore = this.props.userStore;
-        let defaultMailManagerChecked = this.getDefaultMailManagerChecked();
-        let defaultMailUserChecked = this.getDefaultMailUserChecked();
+        let self = this;
+        const rowSelection = {
+            selectedRowKeys,
+            onChange: this.onSelectChange,
+        };
         return (
             <div>
                 <Skeleton loading={!userStore.isNormalUser} active avatar>
-                    <Row>
-                        <Col span={16} offset={4}>
-                            <Card title="系统告警配置" extra={
-                                <div>
-                                    <a onClick={this.modifyDetails.bind(this)}>{this.state.isModifyDetails ? "保存" : "修改"}</a>
-                                </div>
-                            }>
-                                {!this.state.isModifyDetails && <div className={classes.shade}></div>}
-                                <div>
-                                <Card
-                                    style={{ marginTop: 16 }}
-                                    type="inner"
-                                    title="登录时密码尝试三次以上则锁定账户，系统自动发邮件通知管理员解锁"
-                                >
-                                    <Row>
-                                        <Col span={4}>
-                                            {"是否自动发送邮件："}
-                                        </Col>
-                                        <Col span={4}>
-                                            <Switch checkedChildren="开" unCheckedChildren="关" onChange={this.handleMailManagerSwitchConfig} checked={defaultMailManagerChecked} />
-                                        </Col>
-                                    </Row>
-                                    <br />
-                                    <Row>
-                                        <Col span={4}>
-                                            {"请选择管理员："}
-                                        </Col>
-                                        <Col span={4} >
-                                            <Select style={{ width: 200 }} disabled={!defaultMailManagerChecked} value={mailToManagerUuid} onChange={this.handleSelectManager}>
-                                                {users.map(user => (
-                                                    <Option value={user.uuid}>{user.account}</Option>
-                                                ))}
-                                            </Select>
-                                        </Col>
-                                    </Row>
-                                </Card>
-                                <Card
-                                    style={{ marginTop: 16 }}
-                                    type="inner"
-                                    title="当系统发现漏洞，系统自动发送邮件通知用户"
-                                >
-                                    <Row>
-                                        <Col span={4}>
-                                            {"是否自动发送邮件："}
-                                        </Col>
-                                        <Col span={4}>
-                                            <Switch checkedChildren="开" unCheckedChildren="关" onChange={this.handleMaileUserSwitchConfig} checked={defaultMailUserChecked} />
-                                        </Col>
-                                    </Row>
-                                </Card>
-                                </div>
-                            </Card>
-                        </Col>
-                    </Row>
+                    <div style={{ minWidth: GetMainViewMinWidth(), minHeight: GetMainViewMinHeight() }}>
+                        <Card title={'系统备份'} style={{ width: '100%', height: '100%' }}
+                        >
+                            <FormControl margin="normal" className={classes.formControl}>
+                                <FormLabel component="legend">用户列表</FormLabel>
+                                <Table
+                                    rowSelection={rowSelection}
+                                    id="userListTable"
+                                    columns={columns}
+                                    dataSource={users}
+                                    scroll={{ x: scrollWidth, y: scrollHeight }}
+                                    rowKey={record => record.uuid}
+                                    pagination={{
+                                        showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
+                                        pageSizeOptions: [DEFAULT_PAGE_SIZE.toString(), '20', '30', '40'],
+                                        defaultPageSize: DEFAULT_PAGE_SIZE,
+                                        showQuickJumper: true,
+                                        showSizeChanger: true,
+                                        onShowSizeChange(current, pageSize) {  //当几条一页的值改变后调用函数，current：改变显示条数时当前数据所在页；pageSize:改变后的一页显示条数
+                                            self.handlePageChange(current, pageSize);
+                                        },
+                                        onChange(current, pageSize) {  //点击改变页数的选项时调用函数，current:将要跳转的页数
+                                            self.handlePageChange(current, pageSize);
+                                        },
+                                    }}
+                                />
+                            </FormControl>
+                            <Row>
+                                <Col span={4}>
+                                    {"日志开关："}
+                                </Col>
+                                <Col span={4}>
+                                    <Switch checkedChildren="开" unCheckedChildren="关" onChange={this.handleLogSwitch.bind(this)}
+                                     checked={this.getLogValue()} />
+                                </Col>
+                                <Col span={4}>
+                                    {"备份文件名称："}
+                                </Col>
+                                <Col span={4}>
+                                    <Input defaultValue={this.getDefaultFileName()} onChange={this.handleFileChange.bind(this)} style={{ width: 200 }} />
+                                </Col>
+                            </Row>
+                            <br />
+                            <br />
+                            <Row>
+                                <Col span={4} offset={6}>
+                                    <Button type="primary" size="large" onClick={this.saveData.bind(this)}><Icon type="save" />系统备份</Button>
+                                </Col>
+                            </Row>
+                        </Card>
+                    </div>
                 </Skeleton>
             </div>
         )
