@@ -8,7 +8,9 @@ const hostMenus = [
         icon: 'control',
         key: '/home/firmware-analyze/',
         subs: [
-            { key: '/home/firmware-analyze/fetch', title: '固件收集', icon: 'download', },
+            { key: '/home/firmware-analyze/firmware-fetch', title: '固件收集', icon: 'download', },
+            { key: '/home/firmware-analyze/package-fetch', title: '固件包抽取', icon: 'project', },
+            { key: '/home/firmware-analyze/function-fetch', title: '固件函数抽取', icon: 'code',},
         ]
     },
     {
@@ -53,11 +55,6 @@ const hostMenus = [
             { key: '/home/certfile-manage/generate', title: '授权文件生成', icon: 'export', },
             { key: '/home/certfile-manage/import', title: '授权文件导入', icon: 'import', },
         ]
-    },
-    {
-        title: '固件函数抽取',
-        icon: 'CodeOutlined',
-        key: '/home/code-display'
     },
     {
         title: '关于',

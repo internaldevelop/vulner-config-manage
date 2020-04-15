@@ -4,7 +4,7 @@ import { withStyles } from '@material-ui/core/styles';
 import { observer, inject } from 'mobx-react'
 import FormControl from '@material-ui/core/FormControl';
 import FormLabel from '@material-ui/core/FormLabel';
-import { Input, Table, Skeleton, Select, Card, Row, Col, Switch, Button, Icon } from 'antd'
+import { message, Table, Skeleton, Select, Card, Row, Col, Button, Icon } from 'antd'
 import { columns as Column } from './Column'
 import RestReq from '../../utils/RestReq';
 import { GetMainViewMinHeight, GetMainViewMinWidth } from '../../utils/PageUtils'
@@ -49,7 +49,6 @@ class DataRestoreView extends React.Component {
             pageSize: DEFAULT_PAGE_SIZE,
             scrollWidth: 800,        // 表格的 scrollWidth
             scrollHeight: 200,      // 表格的 scrollHeight
-            logOnOff: 'on',
         }
         this.getUsers();
     }
@@ -73,43 +72,32 @@ class DataRestoreView extends React.Component {
         }
     }
 
-    getLogValue = () => {
-        // TODO get log value from server
-        return 'on';
-    }
-
-    handleLogSwitch = (checked, event) => {
-        const logOnOff = checked ? 'on' : 'off';
-        this.setState({ logOnOff });
-    }
-
     onSelectChange = selectedRowKeys => {
         console.log('selectedRowKeys changed: ', selectedRowKeys);
         this.setState({ selectedRowKeys });
     };
 
-    getDefaultFileName = () => {
-        // TODO get log value from server
-        let now = new Date();
-        let month = (10 > (now.getMonth() + 1)) ? '0' + (now.getMonth() + 1) : now.getMonth() + 1;
-        let day = (10 > now.getDate()) ? '0' + now.getDate() : now.getDate();
-        let today = now.getFullYear() + month + day;
-        return 'back' + today;
+    restoreFactoryDataCB = (data) => {
+        if (data.code !== 'ERROR_OK') {
+            message.info('恢复出厂设置失败！');
+            return;
+        } else {
+            message.info('恢复出厂设置成功！');
+        }
     }
 
-    handleFileChange = (value) => {
-        // 
+    restoreFactoryData = () => {
+        RestReq.asyncGet(this.restoreFactoryDataCB, '/firmware-analyze/system/default_config');
     }
 
-    saveData = () => {
-        // TODO save data
+    restoreData = () => {
+        //
     }
 
     render() {
         const { classes } = this.props;
         const { selectedRowKeys, scrollWidth, scrollHeight, columns, users, } = this.state;
         const userStore = this.props.userStore;
-        const defaultLogChecked = this.getLogValue();
         let self = this;
         const rowSelection = {
             selectedRowKeys,
@@ -149,10 +137,10 @@ class DataRestoreView extends React.Component {
                             <br />
                             <Row>
                                 <Col span={4} offset={6}>
-                                    <Button type="primary" size="large" onClick={this.saveData.bind(this)}><Icon type="save" />恢复出厂设置</Button>
+                                    <Button type="primary" size="large" onClick={this.restoreFactoryData.bind(this)}><Icon type="save" />恢复出厂设置</Button>
                                 </Col>
                                 <Col span={4} offset={2}>
-                                    <Button type="primary" size="large" onClick={this.saveData.bind(this)}><Icon type="save" />系统恢复</Button>
+                                    <Button type="primary" size="large" onClick={this.restoreData.bind(this)}><Icon type="save" />系统恢复</Button>
                                 </Col>
                             </Row>
                         </Card>

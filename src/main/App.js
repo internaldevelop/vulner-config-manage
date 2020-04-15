@@ -4,6 +4,8 @@ import { HashRouter, Route, Switch } from 'react-router-dom'
 import PrivateRoute from './AppRouter/PrivateRoute'
 import LoginPage from '../components/login/LoginPage'
 import Signup from '../components/login/SignUp';
+import FirmwarePackageView from '../views/FirmwarePackageView';
+import FirmwareFunctionView from '../views/FirmwareFunctionView';
 import { LoadEnvironConfig } from "../global/environment"
 import SystemEntry from './SystemEntry'
 
@@ -46,6 +48,7 @@ class App extends Component {
             <Route exact path="/" component={LoginPage} />
             <Route exact path="/login" component={LoginPage} />
             <Route exact path="/signup" component={Signup} />
+            <Route exact path="/function-fetc" component={FirmwareFunctionView} />
             <PrivateRoute path='/home' component={SystemEntry} />
             {/* <PrivateRoute path='/tasks' component={TaskPage} /> */}
             {/* <Redirect exact from='/' to='/home'/> */}

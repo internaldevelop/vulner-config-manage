@@ -2,9 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import { observer, inject } from 'mobx-react'
-import FormControl from '@material-ui/core/FormControl';
-import FormLabel from '@material-ui/core/FormLabel';
-import { Input, Table, Skeleton, Select, Card, Row, Col, Switch, Button, Icon } from 'antd'
+import { Input, message, Skeleton, Select, Card, Row, Col, Switch, Button, Icon } from 'antd'
 import { columns as Column } from './Column'
 import RestReq from '../../utils/RestReq';
 import { GetMainViewMinHeight, GetMainViewMinWidth } from '../../utils/PageUtils'
@@ -44,42 +42,64 @@ class DataBackupView extends React.Component {
         this.state = {
             selectedRowKeys: [], // Check here to configure the default column
             users: [],
+            logConfigs: [],
             columns: Column,
             pageSize: DEFAULT_PAGE_SIZE,
             scrollWidth: 800,        // 表格的 scrollWidth
             scrollHeight: 200,      // 表格的 scrollHeight
-            logOnOff: 'on',
+            // analysisLog: {},
+            // systemLog: {},
+            // taskLog: {},
+            // queryTaskLog: {},
+            // queryLog: {},
+            // searchLog: {},
+            // statisticLog: {},
+            // debugLog: {},
+            // downloadLog: {},
         }
-        this.getUsers();
+        //this.getUsers();
+        this.getSystemConfigs();
     }
 
-    getUsersCB = (data) => {
+    getSystemConfigsCB = (data) => {
+        if (data.code !== 'ERROR_OK')
+            return;
+
+        let logConfigs = [];
+        for (let key in data.payload.log_configs) {
+            logConfigs.push({ name: key, description: data.payload.log_configs[key].description, alias: data.payload.log_configs[key].alias, on: data.payload.log_configs[key].on });
+        }
+
         this.setState({
-            users: data.payload,
+            logConfigs,
+            // analysisLog: data.payload.log_configs.analysis,
+            // systemLog: data.payload.log_configs.system_config,
+            // taskLog: data.payload.log_configs.task,
+            // queryTaskLog: data.payload.log_configs.query_task,
+            // queryLog: data.payload.log_configs.query,
+            // searchLog: data.payload.log_configs.search,
+            // statisticLog: data.payload.log_configs.statistics,
+            // debugLog: data.payload.log_configs.debug,
+            // downloadLog: data.payload.log_configs.download,
         });
     }
 
-    getUsers() {
-        RestReq.asyncGet(this.getUsersCB, '/unified-auth/account_manage/all');
+    getSystemConfigs() {
+        RestReq.asyncGet(this.getSystemConfigsCB, '/firmware-analyze/system/read_config');
     }
 
-    handleSelectManager = (value) => {
-        const { users } = this.state;
-        for (let user of users) {
-            if (user.uuid === value) {
-                break;
+    getLogValue = (item) => {
+        return (item.on === 1 ? true : false);
+    }
+
+    handleLogSwitch = (item) => (checked, event) => {
+        let logConfigs  = this.state.logConfigs;
+        for (let log of logConfigs) {
+            if (log.name === item.name) {
+                log.on = checked ? 1 : 0; 
             }
         }
-    }
-
-    getLogValue = () => {
-        // TODO get log value from server
-        return (this.state.logOnOff === 'on' ? true : false);
-    }
-
-    handleLogSwitch = (checked, event) => {
-        const logOnOff = checked ? 'on' : 'off';
-        this.setState({ logOnOff });
+        this.setState({ logConfigs });
     }
 
     onSelectChange = selectedRowKeys => {
@@ -95,17 +115,36 @@ class DataBackupView extends React.Component {
         return 'back' + today;
     }
 
-    handleFileChange = (value) => {
-        // 
+    saveDataCB = (data) => {
+        if (data.code !== 'ERROR_OK') {
+            message.info('系统备份失败！');
+            return;
+        } else {
+            this.getSystemConfigsCB(data);
+            message.info('系统备份成功！');
+        }
     }
 
     saveData = () => {
-        // TODO save data
+        const logConfigs = this.state.logConfigs;
+        let logConfigsDic = {};
+        for (let log of logConfigs) {
+            let item = {
+                alias: log.alias,
+                on: log.on,
+                description: log.description,
+            };
+            logConfigsDic[log.name] = item;
+            // 如果写成let type = log.name 
+            // logConfgisDic.type = item 则key为'type'而不是log.name的值
+        }
+        let result = JSON.stringify({log_configs: logConfigsDic});
+        RestReq.asyncPost(this.saveDataCB, '/firmware-analyze/system/write_config', {sys_config: result});
     }
 
     render() {
         const { classes } = this.props;
-        const { selectedRowKeys, scrollWidth, scrollHeight, columns, users, } = this.state;
+        const { selectedRowKeys, logConfigs } = this.state;
         const userStore = this.props.userStore;
         let self = this;
         const rowSelection = {
@@ -118,50 +157,33 @@ class DataBackupView extends React.Component {
                     <div style={{ minWidth: GetMainViewMinWidth(), minHeight: GetMainViewMinHeight() }}>
                         <Card title={'系统备份'} style={{ width: '100%', height: '100%' }}
                         >
-                            <FormControl margin="normal" className={classes.formControl}>
-                                <FormLabel component="legend">用户列表</FormLabel>
-                                <Table
-                                    rowSelection={rowSelection}
-                                    id="userListTable"
-                                    columns={columns}
-                                    dataSource={users}
-                                    scroll={{ x: scrollWidth, y: scrollHeight }}
-                                    rowKey={record => record.uuid}
-                                    pagination={{
-                                        showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
-                                        pageSizeOptions: [DEFAULT_PAGE_SIZE.toString(), '20', '30', '40'],
-                                        defaultPageSize: DEFAULT_PAGE_SIZE,
-                                        showQuickJumper: true,
-                                        showSizeChanger: true,
-                                        onShowSizeChange(current, pageSize) {  //当几条一页的值改变后调用函数，current：改变显示条数时当前数据所在页；pageSize:改变后的一页显示条数
-                                            self.handlePageChange(current, pageSize);
-                                        },
-                                        onChange(current, pageSize) {  //点击改变页数的选项时调用函数，current:将要跳转的页数
-                                            self.handlePageChange(current, pageSize);
-                                        },
-                                    }}
-                                />
-                            </FormControl>
+                            <Row gutter={[16, 16]}>
+                                {logConfigs.map((item, index) => (
+                                    <Col span={12}>
+                                        <Col span={6}>
+                                            {item.alias}
+                                        </Col>
+                                        <Col span={4}>
+                                            <Switch checkedChildren="开" unCheckedChildren="关" onChange={this.handleLogSwitch(item)}
+                                                checked={this.getLogValue(item)} />
+                                        </Col>
+                                    </Col>
+                                ))}
+                            </Row>
+                            <br />
                             <Row>
-                                <Col span={4}>
-                                    {"日志开关："}
-                                </Col>
-                                <Col span={4}>
-                                    <Switch checkedChildren="开" unCheckedChildren="关" onChange={this.handleLogSwitch.bind(this)}
-                                     checked={this.getLogValue()} />
-                                </Col>
                                 <Col span={4}>
                                     {"备份文件名称："}
                                 </Col>
                                 <Col span={4}>
-                                    <Input defaultValue={this.getDefaultFileName()} onChange={this.handleFileChange.bind(this)} style={{ width: 200 }} />
+                                    <Input defaultValue={this.getDefaultFileName()} onChange={this.handleFileChange} style={{ width: 200 }} />
                                 </Col>
                             </Row>
                             <br />
                             <br />
                             <Row>
                                 <Col span={4} offset={6}>
-                                    <Button type="primary" size="large" onClick={this.saveData.bind(this)}><Icon type="save" />系统备份</Button>
+                                    <Button type="primary" size="large" onClick={this.saveData}><Icon type="save" />系统备份</Button>
                                 </Col>
                             </Row>
                         </Card>
