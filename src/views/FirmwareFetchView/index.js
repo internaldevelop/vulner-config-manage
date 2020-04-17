@@ -193,10 +193,6 @@ class FirmwareFetchView extends React.Component {
         let startSet = (targetPage - 1) * pageSize + 1;
         // TODO 提供分页功能,但是接口目前没有提供分页
         RestReq.asyncGet(this.getAllFirmwaresCB, '/firmware-analyze/fw_fetch/list', { /*offset: startSet, count: pageSize*/ }, { token: false });
-        // TODO 接口目前有问题，后续沟通，这里构造一条数据
-        // let firmwareItem = {index: 1, key: 1, firmware_id: '900000', fw_file_name: 'TL-WVR900L_V1.0_161207'};
-        // let firmwareList = this.state.firmwareList.push(firmwareItem);
-        // this.setState({ firmwareList, totalResult: 1, });
     }
 
     getAllFirmwaresCB = (data) => {

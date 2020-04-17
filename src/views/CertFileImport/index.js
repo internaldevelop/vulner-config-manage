@@ -72,11 +72,7 @@ class CertFileImport extends React.Component {
     }
 
     render() {
-        const { classes } = this.props;
-        const { users } = this.state;
         const userStore = this.props.userStore;
-        let roles = this.props.userRoleStore.roleArray;
-        const { fileList } = this.state;
         let self = this;
         uploadFileContent = '';
 
@@ -94,6 +90,14 @@ class CertFileImport extends React.Component {
               }
               if (status === 'done') {
                 if (info.file.response.code === 'ERROR_OK') {
+                    if (info.file.response.payload !== undefined &&  info.file.response.payload !== null) {
+                        let certFileItem = {
+                            selectUserUuid: info.file.response.payload.account_uuid,
+                            expireDate: info.file.response.payload.expire_time + ' 00:00:00',
+                            selectRoles: info.file.response.payload.role_uuids.split(","),
+                        };
+                        self.props.certFileStore.initCertFileItem(certFileItem);
+                    }
                     message.success(`${info.file.name} 授权成功.`);
                 } else {
                     message.success(`${info.file.name} 授权失败：` + info.file.response.error);

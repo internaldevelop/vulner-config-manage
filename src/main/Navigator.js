@@ -44,7 +44,7 @@ const hostMenus = [
             { key: '/home/sysadmin/personal', title: '个人资料', icon: 'user', },
             { key: '/home/sysadmin/backup', title: '数据备份', icon: 'copy', },
             { key: '/home/sysadmin/restore', title: '数据恢复', icon: 'rest', },
-            { key: '/home/sysadmin/assets', title: '资产管理', icon: 'cluster', },
+            // { key: '/home/sysadmin/assets', title: '资产管理', icon: 'cluster', },
         ]
     },
     {

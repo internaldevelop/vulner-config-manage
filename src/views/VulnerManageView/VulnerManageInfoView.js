@@ -9,10 +9,9 @@ import VulnerParamsConfig from './VulnerParamsConfig'
 import { actionType } from '../../global/enumeration/ActionType';
 import { DeepClone, DeepCopy } from '../../utils/ObjUtils'
 import { GetMainViewHeight } from '../../utils/PageUtils'
-import HttpRequest from '../../utils/HttpRequest';
-import { isContainSpecialCharacter } from '../../utils/ObjUtils'
+import RestReq from '../../utils/RestReq';
 import { GetEdbServerRootUrl } from '../../global/environment'
-import { errorCode } from '../../global/error'
+import { isContainSpecialCharacter } from '../../utils/ObjUtils'
         
 const TabPane = Tabs.TabPane;
 
@@ -49,13 +48,16 @@ class VulnerManageInfoView extends React.Component {
             currentPage: 1,     // Table中当前页码（从 1 开始）
             pageSize: DEFAULT_PAGE_SIZE,
             scrollWidth: 1000,        // 表格的 scrollWidth
-            scrollHeight: 300,      // 表格的 scrollHeight
+            scrollHeight: 400,      // 表格的 scrollHeight
             shadeState: false,
             inputValue1: '',
             inputValue2: '',
             totalResult: 0,
             queryType: 0,
         }
+        
+        // 设置操作列的渲染
+        this.initActionColumn();
         this.getVulnerResults(this.state.currentPage, this.state.pageSize, this.state.queryType);
     }
 
@@ -127,10 +129,13 @@ class VulnerManageInfoView extends React.Component {
 
     generateResultList = (result, totalResult, currentPage, queryType) => {
         let vulners = [];
+        let startSet = (currentPage - 1) * this.state.pageSize;
         vulners = result.map((item, index) => {
             let taskItem = DeepClone(item);
-            taskItem.key = index + 1;
-            taskItem.index = index + 1;
+            //taskItem.key = index + 1;
+            //taskItem.index = index + 1;
+            taskItem.index = startSet + index + 1;
+            taskItem.key = startSet + index + 1;
             this.generateResult(taskItem, item)
             return taskItem;
         })
@@ -140,27 +145,27 @@ class VulnerManageInfoView extends React.Component {
 
     getResultsCB = (result) => {
         // 检查响应的payload数据是数组类型
-        if (result.code !== errorCode.ERROR_OK
+        if (result.code !== 'ERROR_OK'
             || (typeof result.payload === "undefined")
-            || (result.payload.items === null)
-            || (result.payload.items.length === 0)) {
+            || (result.payload.data === null)
+            || (result.payload.data.length === 0)) {
             message.info("没有查询到数据，请重新查询。");
             return;
         }
         //let currentPage = (result.payload.items.length % 10 == 0) ? (parseInt(result.payload.items.length / 10)) : (parseInt(result.payload.items.length / 10) + 1);
         let currentPage = this.state.currentPage;
-        this.generateResultList(result.payload.items, result.payload.total, currentPage, 0);
-        //this.initActionColumn();
+        this.generateResultList(result.payload.data, result.payload.totalResults, currentPage, 0);
+        this.initActionColumn();
     }
 
     getVulnerResults = (currentPage, pageSize, queryType) => {
-        //let startSet = (currentPage - 1) * pageSize;
+        let startSet = (currentPage - 1) * pageSize + 1;
         if (queryType === 1) {
             this.fuzzySearch(currentPage);
         } else if (queryType === 2) {
             this.exactSearch();
         } else {
-            //HttpRequest.asyncGet2(this.getResultsCB, '/edb/query', { offset: 0, count: pageSize * currentPage }, false);
+            RestReq.asyncGet(this.getResultsCB, '/fw-bend-server/vuldb/search',  { page_num: currentPage, page_size: pageSize });// offset: startSet, count: pageSize * currentPage
         }
     }
 
@@ -298,7 +303,7 @@ class VulnerManageInfoView extends React.Component {
 
     getFuzzySearchCB = (result) => {
         // 检查响应的payload数据是数组类型
-        if (result.code !== errorCode.ERROR_OK
+        if (result.code !== 'ERROR_OK'
             || (typeof result.payload === "undefined")
             || (result.payload.items === null)
             || (result.payload.items.length === 0)) {
@@ -316,7 +321,7 @@ class VulnerManageInfoView extends React.Component {
 
     getExactSearchCB = (result) => {
         // 检查响应的payload数据是数组类型
-        if (typeof result.payload === "undefined" || result.code !== errorCode.ERROR_OK) {
+        if (typeof result.payload === "undefined" || result.code !== 'ERROR_OK') {
             message.info('没有查询到数据，请重新输入。');
             this.setState({
                 //inputValue2: '',
