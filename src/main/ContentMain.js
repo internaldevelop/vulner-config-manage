@@ -19,17 +19,14 @@ import FirmwareFunctionView from '../views/FirmwareFunctionView';
 import FirmwarePackageView from '../views/FirmwarePackageView';
 import DataBackupView from '../views/DataBackupView';
 import DataRestoreView from '../views/DataRestoreView';
-import EquipAuthorizationView from '../views/EquipAuthorizationView';
-import AccessAuthenticationView from '../views/AccessAuthenticationView';
-import FingerprintManagementView from '../views/FingerprintManagementView';
 
 @withRouter
 class ContentMain extends React.Component {
   render() {
     return (
       <div style={{ padding: 16, position: 'relative' }}>
-        {GetSystemType() === 1 && this.getHostSystemRoute()}
-        {GetSystemType() === 5 && this.getAccessSystemRoute()}
+        {GetSystemType() === 0 && this.getHostSystemRoute()}
+        {GetSystemType() === 1 && this.getAccessSystemRoute()}
       </div>
     )
   }
@@ -68,9 +65,6 @@ class ContentMain extends React.Component {
   getAccessSystemRoute() {
     return (
       <Switch>
-        <PrivateRoute exact path='/home/equip-authorization' component={EquipAuthorizationView} />
-        <PrivateRoute exact path='/home/access-authentication' component={AccessAuthenticationView} />
-        <PrivateRoute exact path='/home/fingerprint-management' component={FingerprintManagementView} />
         <PrivateRoute exact path='/home/log-manage/system-logs' component={SystemLogsView} />
         <PrivateRoute exact path='/home/sysadmin/users' component={UsersManageView} />
         <PrivateRoute exact path='/home/sysadmin/personal' component={UserInfoView} />

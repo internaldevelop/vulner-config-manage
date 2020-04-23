@@ -65,29 +65,9 @@ const hostMenus = [
 
 const accessMenus = [
     {
-        title: '设备授权',
-        icon: 'control',
-        key: '/home/equip-authorization',
-    },
-    {
-        title: '接入认证',
-        icon: 'project',
-        key: '/home/access-authentication',
-    },
-    {
         title: '运行状态监测',
         icon: 'line-chart',
         key: '/home/history-performance',
-    },
-    {
-        title: '流量监测与审计',
-        icon: 'line-chart',
-        key: '/home/history-performance',
-    },
-    {
-        title: '指纹管理',
-        icon: 'safety-certificate',
-        key: '/home/fingerprint-management/',
     },
     {
         title: '系统管理',
@@ -109,9 +89,9 @@ const accessMenus = [
 class Navigator extends React.Component {
     getMenus() {
         let sysType = GetSystemType();
-        if (sysType === 1) {
+        if (sysType === 0) {
             return hostMenus;
-        } else if (sysType === 5) {
+        } else if (sysType === 1) {
             return accessMenus;
         }
     }
