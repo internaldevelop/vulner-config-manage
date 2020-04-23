@@ -88,9 +88,9 @@ class VulnerManageInfoView extends React.Component {
         columns[columns.length - 1].render = (text, record, index) => (
             <div>
                 <Popconfirm title="确定要删除该漏洞信息吗？" onConfirm={this.handleDel(index).bind(this)} okText="确定" cancelText="取消">
-                    <Button className={classes.actionButton} disabled={!this.isCustomizedData(index)} type="danger" size="small">删除</Button>
+                    <Button className={classes.actionButton} type="danger" size="small">删除</Button>{/**disabled={!this.isCustomizedData(index)} */}
                 </Popconfirm>
-                <Button className={classes.actionButton} disabled={!this.isCustomizedData(index)} type="primary" size="small" onClick={this.handleEditVulner(index).bind(this)}>编辑</Button>
+                <Button className={classes.actionButton} type="primary" size="small" onClick={this.handleEditVulner(index).bind(this)}>编辑</Button>
             </div>
         )
 
@@ -119,6 +119,7 @@ class VulnerManageInfoView extends React.Component {
         item.author = data.author.name;
         item.title = data.description[1];
         item.edb_id = data.edb_id;
+        item.vul_id = data.id;
         if (data.customized !== undefined && data.customized !== null) {
             item.customized = data.customized;
         }
@@ -197,7 +198,7 @@ class VulnerManageInfoView extends React.Component {
 
         // 向后台提交删除该任务
         const { vulners } = this.state;
-        //HttpRequest.asyncGet2(this.deleteVulnerCB(dataIndex), '/edb/delete', { edb_id: vulners[dataIndex].edb_id });
+        RestReq.asyncGet(this.deleteVulnerCB(dataIndex), '/fw-bend-server/vuldb/del_vul', { vul_id: vulners[dataIndex].vul_id });
     }
 
     // 导出报告
@@ -398,9 +399,9 @@ class VulnerManageInfoView extends React.Component {
                             <Button className={classes.iconButton} type="primary" size="large" onClick={this.getExactSearch().bind(this)} ><Icon type="search" />精确查询</Button>
                         </Col>
                         <Col span={4} align="right"><Button type="primary" size="large" onClick={this.handleNewVulner.bind(this)}><Icon type="plus-circle-o" />新建漏洞信息</Button></Col>
-                        <Col span={2} align="right">
+                        {/* <Col span={2} align="right">
                             <Button className={classes.actionButton} type="primary" size="large" onClick={this.exportReport.bind(this)}>导出报告</Button>
-                        </Col>
+                        </Col> */}
                     </Row>
                     <Table
                         id="vulnerListTable"

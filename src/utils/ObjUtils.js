@@ -94,6 +94,11 @@ export function isContainSpecialCharacter(inputStr) {
   return false;
 }
 
+export function isIPPattern(inputStr) {
+  let pattern = /^((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]\d)|\d)(\.((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]\d)|\d)){3}$|^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,6}$/;
+  return pattern.test(inputStr);
+}
+
 export function isContainSpecialCharacterForIP(inputStr) {
   let pattern = new RegExp("[`~!@#$^&*()=|{}':;',\\[\\]<>/?~！@#￥……&*（）——|{}【】‘；：”“'。，、？]");
   if (pattern.test(inputStr)) {
