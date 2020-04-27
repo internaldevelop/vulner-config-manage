@@ -41,8 +41,8 @@ export function LoadEnvironConfig() {
         "mainServerPort": "8090",
         "agentServerPort": "8191",
         "edbServerPort": "10091",
-        "mainServerUrl": "192.168.182.88",
-        "edbServerUrl": "192.168.182.88"
+        "mainServerUrl": "192.168.1.100",
+        "edbServerUrl": "192.168.1.100"
     };
 
     // 读取环境参数配置文件

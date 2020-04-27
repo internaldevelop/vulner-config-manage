@@ -6,6 +6,7 @@ import assetInfoStore from './AssetInfoStore'
 import userRoleStore from './UserRoleStore'
 import vulnerStore from './VulnerStore'
 import certFileStore from './CertFileStore'
+import logStore from './LogStore'
 
 const store = {
   // appStore,
@@ -16,5 +17,6 @@ const store = {
   firmwareStore,
   vulnerStore,
   certFileStore,
+  logStore,
 }
 export default store

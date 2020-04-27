@@ -196,7 +196,7 @@ class VulnerManageInfoView extends React.Component {
         // 从行索引转换成实际的数据索引
         let dataIndex = this.transferDataIndex(rowIndex);
 
-        // 向后台提交删除该任务
+        // 向后台提交删除该漏洞
         const { vulners } = this.state;
         RestReq.asyncGet(this.deleteVulnerCB(dataIndex), '/fw-bend-server/vuldb/del_vul', { vul_id: vulners[dataIndex].vul_id });
     }

@@ -4,6 +4,7 @@ import ArrUtils from '../utils/ArrUtils';
 import StrUtils from '../utils/StrUtils';
 import TimeUtils from '../utils/TimeUtils';
 import qs from 'qs';
+import { GetMainServerRootUrl } from '../global/environment'
 
 
 /**
@@ -129,13 +130,12 @@ class RestReq {
     }
 
     _getBaseURL(baseUrlType) {
-        let baseUrl = 'http://localhost:10112';
+        let baseUrl = 'http://localhost:10110';
 
         // 设定 REST 接口的 BaseUrl
         if (baseUrlType.length === 0) {
             // 默认的 BaseUrl
-            // baseUrl = GetMainServerRootUrl();
-            baseUrl = 'http://localhost:10110';
+            baseUrl = GetMainServerRootUrl();
         }
 
         return baseUrl;

@@ -32,6 +32,7 @@ const hostMenus = [
         icon: 'read',
         key: '/home/log-manage',
         subs: [
+            { key: '/home/log-manage/log-custom', title: '日志格式定制', icon: 'book', },
             { key: '/home/log-manage/system-logs', title: '系统日志', icon: 'alert', },
         ]
     },

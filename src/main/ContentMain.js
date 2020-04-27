@@ -19,6 +19,7 @@ import FirmwareFunctionView from '../views/FirmwareFunctionView';
 import FirmwarePackageView from '../views/FirmwarePackageView';
 import DataBackupView from '../views/DataBackupView';
 import DataRestoreView from '../views/DataRestoreView';
+import LogCustomView from '../views/SystemLogsView/LogCustomView';
 
 @withRouter
 class ContentMain extends React.Component {
@@ -35,6 +36,7 @@ class ContentMain extends React.Component {
     return (
       <Switch>
         <PrivateRoute exact path='/home/log-manage/system-logs' component={SystemLogsView} />
+        <PrivateRoute exact path='/home/log-manage/log-custom' component={LogCustomView} />
 
         <PrivateRoute exact path='/home/sysadmin/users' component={UsersManageView} />
         <PrivateRoute exact path='/home/sysadmin/personal' component={UserInfoView} />
