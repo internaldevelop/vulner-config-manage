@@ -40,9 +40,10 @@ export function LoadEnvironConfig() {
         "ssl": false,
         "mainServerPort": "8090",
         "agentServerPort": "8191",
-        "edbServerPort": "10091",
+        "edbServerPort": "10110",
+        "socketServerPort": "10901",
         "mainServerUrl": "192.168.1.100",
-        "edbServerUrl": "192.168.1.100"
+        "edbServerUrl": "localhost"
     };
 
     // 读取环境参数配置文件
@@ -98,7 +99,7 @@ export function GetAgentRootUrl(agentIp) {
 export function GetWebSocketUrl() {
     let protocol = _getWsProtocol();
     let url = global.myEnvironConfig.mainServerUrl;
-    let port = global.myEnvironConfig.mainServerPort;
+    let port = global.myEnvironConfig.socketServerPort;
     return protocol + '://' + url + ':' + port + '/websocket/';
 }
 

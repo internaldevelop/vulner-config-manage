@@ -41,7 +41,7 @@ class DataBackupView extends React.Component {
         super(props);
         this.state = {
             selectedRowKeys: [], // Check here to configure the default column
-            users: [],
+            fileName: this.getDefaultFileName(),
             logConfigs: [],
             columns: Column,
             pageSize: DEFAULT_PAGE_SIZE,
@@ -57,7 +57,6 @@ class DataBackupView extends React.Component {
             // debugLog: {},
             // downloadLog: {},
         }
-        //this.getUsers();
         this.getSystemConfigs();
     }
 
@@ -84,8 +83,8 @@ class DataBackupView extends React.Component {
         });
     }
 
-    getSystemConfigs() {
-        RestReq.asyncGet(this.getSystemConfigsCB, '/firmware-analyze/system/read_config');
+    getSystemConfigs() {///firmware-analyze/system/read_config
+        RestReq.asyncGet2(this.getSystemConfigsCB, '/system/read_config');
     }
 
     getLogValue = (item) => {
@@ -93,10 +92,10 @@ class DataBackupView extends React.Component {
     }
 
     handleLogSwitch = (item) => (checked, event) => {
-        let logConfigs  = this.state.logConfigs;
+        let logConfigs = this.state.logConfigs;
         for (let log of logConfigs) {
             if (log.name === item.name) {
-                log.on = checked ? 1 : 0; 
+                log.on = checked ? 1 : 0;
             }
         }
         this.setState({ logConfigs });
@@ -113,6 +112,10 @@ class DataBackupView extends React.Component {
         let day = (10 > now.getDate()) ? '0' + now.getDate() : now.getDate();
         let today = now.getFullYear() + month + day;
         return 'back' + today;
+    }
+
+    handleFileChange = (event) => {
+        this.setState({ fileName: event.target.value });
     }
 
     saveDataCB = (data) => {
@@ -138,8 +141,8 @@ class DataBackupView extends React.Component {
             // 如果写成let type = log.name 
             // logConfgisDic.type = item 则key为'type'而不是log.name的值
         }
-        let result = JSON.stringify({log_configs: logConfigsDic});
-        RestReq.asyncPost(this.saveDataCB, '/firmware-analyze/system/write_config', {sys_config: result});
+        let result = JSON.stringify({ log_configs: logConfigsDic });
+        RestReq.asyncPost2(this.saveDataCB, '/system/write_config', { config_key: this.setState.fileName, sys_config: result });
     }
 
     render() {
@@ -176,16 +179,14 @@ class DataBackupView extends React.Component {
                                     {"备份文件名称："}
                                 </Col>
                                 <Col span={4}>
-                                    <Input defaultValue={this.getDefaultFileName()} onChange={this.handleFileChange} style={{ width: 200 }} />
+                                    <Input defaultValue={this.state.fileName} onChange={this.handleFileChange} style={{ width: 200 }} />
                                 </Col>
                             </Row>
                             <br />
                             <br />
-                            <Row>
-                                <Col span={4} offset={6}>
-                                    <Button type="primary" size="large" onClick={this.saveData}><Icon type="save" />系统备份</Button>
-                                </Col>
-                            </Row>
+                            <div align='center'>
+                                <Button type="primary" size="large" onClick={this.saveData}><Icon type="save" />系统备份</Button>
+                            </div>
                         </Card>
                     </div>
                 </Skeleton>

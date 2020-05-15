@@ -4,7 +4,7 @@ import ArrUtils from '../utils/ArrUtils';
 import StrUtils from '../utils/StrUtils';
 import TimeUtils from '../utils/TimeUtils';
 import qs from 'qs';
-import { GetMainServerRootUrl } from '../global/environment'
+import { GetMainServerRootUrl, GetEdbServerRootUrl } from '../global/environment'
 
 
 /**
@@ -22,6 +22,14 @@ class RestReq {
      */
     asyncGet(callBack, url, params = {}, config = {}) {
         return this.asyncCall(url, callBack, 'get', params, config);
+    }
+
+    asyncGet2(callBack, url, params = {}, config = {}) {
+        return this.asyncCall2(url, callBack, 'get', params, config);
+    }
+
+    asyncPost2(callBack, url, params = {}, config = {}) {
+        return this.asyncCall2(url, callBack, 'post', params, config);
     }
 
     /**
@@ -105,6 +113,57 @@ class RestReq {
             });
     }
 
+    asyncCall2(url, callBack, method = 'get', params = {}, config = {}) {
+        config = this._composeConfig(config);
+
+        // 设定 REST 接口的 baseURL
+        let baseURL = this._getEdbBaseURL(config.baseUrlType);
+
+        // 设置 axios 的 options
+        let options = {
+            method,     // default is 'get'
+            baseURL,    // `baseURL` will be prepended to `url` unless `url` is absolute.
+            url,        // `url` is the server URL that will be used for the request
+            responseType: 'json',
+            timeout: 3000, // default is `0` (no timeout)
+        };
+
+        // 需要验证权限的加上 access_token 参数
+        if (config.token) {
+            params.access_token = this._getAccessToken();
+        }
+
+        if (method === 'post') {
+            // post 方法时，参数传递给 data 域
+            options.data = qs.stringify(params);
+            options.headers = { 'content-type': 'application/x-www-form-urlencoded' };
+        } else if (ArrUtils.contains(['get', 'delete'], method)) {
+            // get / delete 方法时，参数传递给 params 域
+            options.params = params;
+        }
+
+        // 客户端认证
+        if (config.clientAuth) {
+            options.auth = this._getClientAuthConfig();
+        }
+
+        // 执行请求
+        axios(options)
+            .then((response) => response.data)
+            .then((data) => {
+                console.log('axios response data:');
+                console.log(data);//输出返回的数据
+                if (!!callBack && (config.alwaysCallBack || data === null || (data.code !== undefined && data.code === 'ERROR_OK'))) {
+                    callBack(data);
+                }
+            })
+            .catch(error => {
+                console.log('axios catch error:');
+                console.log(error);
+                message.error(StrUtils.eng2chn(error.message));
+            });
+    }
+
     _composeConfig(config) {
         if (config === undefined || config === null) {
             // 未定义config 时，或其为 null 时，构造空对象
@@ -127,6 +186,18 @@ class RestReq {
             config.token = true;
         }
         return config;
+    }
+
+    _getEdbBaseURL(baseUrlType) {
+        let baseUrl = 'http://localhost:10112';
+
+        // 设定 REST 接口的 BaseUrl
+        if (baseUrlType.length === 0) {
+            // 默认的 BaseUrl
+            baseUrl = 'http://localhost:10112';
+        }
+
+        return baseUrl;
     }
 
     _getBaseURL(baseUrlType) {

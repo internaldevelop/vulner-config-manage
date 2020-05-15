@@ -160,14 +160,14 @@ class VulnerManageInfoView extends React.Component {
     }
 
     getVulnerResults = (currentPage, pageSize, queryType) => {
-        let startSet = (currentPage - 1) * pageSize + 1;
-        if (queryType === 1) {
-            this.fuzzySearch(currentPage);
-        } else if (queryType === 2) {
-            this.exactSearch();
-        } else {
-            RestReq.asyncGet(this.getResultsCB, '/fw-bend-server/vuldb/search',  { page_num: currentPage, page_size: pageSize });// offset: startSet, count: pageSize * currentPage
-        }
+        // let startSet = (currentPage - 1) * pageSize + 1;
+        // if (queryType === 1) {
+        //     this.fuzzySearch(currentPage);
+        // } else if (queryType === 2) {
+        //     this.exactSearch();
+        // } else {
+            RestReq.asyncGet(this.getResultsCB, '/fw-bend-server/vuldb/search',  { name: this.state.inputValue1, page_num: currentPage, page_size: pageSize });// offset: startSet, count: pageSize * currentPage
+        //}
     }
 
     deleteVulnerCB = (dataIndex) => (data) => {
@@ -361,6 +361,7 @@ class VulnerManageInfoView extends React.Component {
             inputValue2: '',
             queryType: 1,
         });
+        this.getVulnerResults(currentPage, this.state.pageSize, 1);
         //HttpRequest.asyncGet2(this.getFuzzySearchCB, '/edb/search', { field: 'db', value: inputValue1, offset: 0, count: this.state.pageSize * currentPage }, false);
     }
 
@@ -392,13 +393,13 @@ class VulnerManageInfoView extends React.Component {
                         <Col span={4}><Typography variant="h6">漏洞库信息管理</Typography></Col>
                         <Col span={7} align="left">
                             <Input className={classes.antInput} size="large" value={this.state.inputValue1} onChange={this.handleGetInputValue1.bind(this)} placeholder="漏洞名称" onKeyPress={this.handleFuzzyKeyPressed.bind(this)} />
-                            <Button className={classes.iconButton} type="primary" size="large" onClick={this.getFuzzySearch(1).bind(this)} ><Icon type="file-search" />模糊查询</Button>
+                            <Button className={classes.iconButton} type="primary" size="large" onClick={this.getFuzzySearch(1).bind(this)} ><Icon type="file-search" />查询</Button>
                         </Col>
-                        <Col span={7} align="left">
+                        {/* <Col span={7} align="left">
                             <Input className={classes.antInput} size="large" value={this.state.inputValue2} onChange={this.handleGetInputValue2.bind(this)} placeholder="漏洞编号" onKeyPress={this.handleExactKeyPressed.bind(this)} />
                             <Button className={classes.iconButton} type="primary" size="large" onClick={this.getExactSearch().bind(this)} ><Icon type="search" />精确查询</Button>
-                        </Col>
-                        <Col span={4} align="right"><Button type="primary" size="large" onClick={this.handleNewVulner.bind(this)}><Icon type="plus-circle-o" />新建漏洞信息</Button></Col>
+                        </Col> */}
+                        <Col span={13} align="right"><Button type="primary" size="large" onClick={this.handleNewVulner.bind(this)}><Icon type="plus-circle-o" />新建漏洞信息</Button></Col>
                         {/* <Col span={2} align="right">
                             <Button className={classes.actionButton} type="primary" size="large" onClick={this.exportReport.bind(this)}>导出报告</Button>
                         </Col> */}

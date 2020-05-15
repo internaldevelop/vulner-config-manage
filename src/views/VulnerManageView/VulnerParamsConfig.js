@@ -106,15 +106,15 @@ class VulnerParamsConfig extends React.Component {
                 {
                     title, author, type, platform, customized,
                 },
-                false
             );
         } else if (this.props.vulnerStore.vulnerAction === actionType.ACTION_EDIT) {
-            RestReq.asyncGet(this.requestVulnerCB('update'), '/fw-bend-server/vuldb/modify_vul',
-                {
-                    id: vul_id, edb_id, title, author, type, platform, customized,
-                },
-                false
-            );
+            let result = {id: vul_id, edb_id: edb_id};//result result.toString() JSON.stringify(result);三种都不行 可能是get请求 会转义特殊字符 需要用post
+            RestReq.asyncGet(this.requestVulnerCB('update'), '/fw-bend-server/vuldb/modify_vul', {params: result});
+            // RestReq.asyncGet(this.requestVulnerCB('update'), '/fw-bend-server/vuldb/modify_vul',
+            //     {
+            //         id: vul_id, edb_id, /*title, author, type, platform, customized,*/
+            //     }
+            // );
         }
     }
 
