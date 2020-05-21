@@ -34,7 +34,7 @@ class FirmwareDownloadView extends React.Component {
             percent: 0,
             user: 'ftpuser',
             password: 'Pass4fp',
-
+            task_id: '',
         }
     }
 
@@ -116,7 +116,7 @@ class FirmwareDownloadView extends React.Component {
 
     processSockMessage = (data) => {
         let message = JSON.parse(data);
-        if (message.type === sockMsgType.FIRMWARE_INFO) {
+        if (message.type === sockMsgType.FIRMWARE_INFO && this.state.task_id === message.payload.task_id) {
             this.setState({ percent: message.payload.percentage });
             if (message.payload.percentage === 100) {
                 let onCallback = this.props.onCallback;
@@ -164,8 +164,8 @@ class FirmwareDownloadView extends React.Component {
     getFirmwareInfoCB = (data) => {
         if (data.code === 'ERROR_OK') {
             message.info('固件开始下载！');
+            this.setState({task_id: data.payload.task_id});
         }
-
     }
 
     getFirmwareInfo = event => {//firmware-analyze/
@@ -174,9 +174,9 @@ class FirmwareDownloadView extends React.Component {
             const { user, password } = this.state;
             this.setState({ percent: 0 });
             if (this.state.protocol === 'HTTP') {
-                RestReq.asyncPost2(this.getFirmwareInfoCB, '/fw_fetch/async_funcs/download', { url: this.state.url });
+                RestReq.asyncPost(this.getFirmwareInfoCB, '/firmware-analyze/fw_fetch/async_funcs/download', { url: this.state.url });
             } else {
-                RestReq.asyncPost2(this.getFirmwareInfoCB, '/fw_fetch/async_funcs/download', { url: this.state.url, user, password });
+                RestReq.asyncPost(this.getFirmwareInfoCB, '/firmware-analyze/fw_fetch/async_funcs/download', { url: this.state.url, user, password });
             }
         } else {
             message.info('URL输入错误，请重新输入URL');
@@ -221,11 +221,14 @@ class FirmwareDownloadView extends React.Component {
         const { classes } = this.props;
         let self = this;
         let percent = this.state.percent;
-        let option = this.getOption();
-        option.series[0].data[0].value = (percent * 100).toFixed(2) - 0;
+        if (percent !== 0) {
+            //percent = (this.state.percent * 100).toFixed(2);
+        }
+        //let option = this.getOption();
+        //option.series[0].data[0].value = (percent * 100).toFixed(2) - 0;
         return (
             <div>
-                <Card title={'固件下载'} /*extra={this.getExtra()}*/ style={{ height: '100%' }} headStyle={MAntdCard.headerStyle('info-2')}>
+                <Card title={'固件下载'} /*extra={this.getExtra()}*/ style={{ height: '100%' }} headStyle={MAntdCard.headerStyle('default')}>
                     <Row>
                         <Col span={18}>
                             <Row>
@@ -262,11 +265,11 @@ class FirmwareDownloadView extends React.Component {
                         </Col>
                         <Col span={6}>
                             <Progress
-                                strokeColor={{
-                                    '0%': '#87d068',
-                                    '100%': '#fffbe5',
-                                }}
-                                strokeWidth='10' type="circle" percent={percent} />
+                                // strokeColor={{
+                                //     '0%': '#87d068',
+                                //     '100%': '#fffbe5',
+                                // }}
+                                strokeColor='#87d068' strokeWidth='10' type="circle" percent={percent} />
                             {/* <ReactEcharts option={option} /> */}
                         </Col>
                     </Row>

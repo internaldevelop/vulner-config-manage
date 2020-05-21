@@ -1,7 +1,7 @@
 import { NavLink as Link } from 'react-router-dom'
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
-import { List, Drawer, Card, Col, Row, Skeleton } from 'antd';
+import { Icon, List, Drawer, Card, Col, Row, Skeleton, Tooltip } from 'antd';
 import { inject, observer } from 'mobx-react';
 import React from 'react';
 import { DeepClone } from '../../utils/ObjUtils';
@@ -9,6 +9,7 @@ import { GetMainViewHeight } from '../../utils/PageUtils';
 import RestReq from '../../utils/RestReq';
 import { columns as Column } from './Column';
 import MAntdCard from '../../rlib/props/MAntdCard';
+import DetailFWInfo from './DetailFWInfo';
 
 const DEFAULT_PAGE_SIZE = 10;
 const styles = theme => ({
@@ -29,19 +30,23 @@ const styles = theme => ({
     },
     packGutterBox: {
         padding: 8,
-        background: '#F0FFFF',
+        //background: '#F0FFFF',
     },
     nameGutterBox: {
         padding: 8,
-        background: '#5F9EA0',
+        //background: '#00695C',
+        //background: '#880e4f',
+        //background: '#5F9EA0',
+        background: '#008c9e',
         height: 40,
-        color: '#000000',
+        color: '#FFFFFF',
     },
     fileGutterBox: {
         padding: 8,
-        background: '#D4F2E7',
         height: 100,
-        color: '#DC143C',
+        background: '#E6E6E6',
+        //background: '#D4F2E7',
+        //color: '#DC143C',
     }
 });
 
@@ -62,13 +67,14 @@ class FirmwarePackageView extends React.Component {
             fileMirrorTotal: 0,
             systemMirrorTotal: 0,
             taskManageVisible: false,
-
+            detailFWInfoPreview: false,
+            selectFWItem: null,
         }
         this.getAllPackages();
     }
 
     getAllPackages = () => {//'/firmware-analyze/fw_analyze/pack/all'
-        RestReq.asyncGet2(this.getAllPackagesCB, '/fw_analyze/pack/all');
+        RestReq.asyncGet(this.getAllPackagesCB, '/firmware-analyze/fw_analyze/pack/all');
     }
 
     getAllPackagesCB = (data) => {
@@ -150,8 +156,16 @@ class FirmwarePackageView extends React.Component {
 
     getExtra() {
         return (
-            <a onClick={this.showDownloadFWDrawer.bind(this)}>任务执行列表</a>
+            <a style={{ color: '#880e4f' }} onClick={this.showDownloadFWDrawer.bind(this)}>任务执行列表</a>
         );
+    }
+
+    showDetailFWInfo = (item) => (event) => {
+        this.setState({ selectFWItem: item, detailFWInfoPreview: true });
+    };
+
+    handleCloseDetailFWInfo = () => {
+        this.setState({ detailFWInfoPreview: false });
     }
 
     render() {
@@ -163,7 +177,7 @@ class FirmwarePackageView extends React.Component {
         return (
             <div>
                 <Skeleton loading={!userStore.isNormalUser} active avatar>
-                    <Card title={'固件包信息总览'} extra={this.getExtra()} style={{ height: '100%' }} headStyle={MAntdCard.headerStyle('info-2')}>
+                    <Card title={'固件包信息总览'} extra={this.getExtra()} style={{ height: '100%' }} headStyle={MAntdCard.headerStyle('default')}>
                         <Row>
                             <Col span={6}>
                                 {"固件包数量：" + packTotal}
@@ -187,21 +201,30 @@ class FirmwarePackageView extends React.Component {
                             </Col>
                         </Row>
                     </Card>
-                    <Card title={'固件包列表'} style={{ height: '100%' }} headStyle={MAntdCard.headerStyle('info-2')}>
+                    <Card title={'固件包列表'} style={{ height: '100%' }} headStyle={MAntdCard.headerStyle('default')}>
                         <Row gutter={[16, 24]}>
                             {packageList.map((item, index) => (
-                                <Link to={{ pathname: '/home/firmware-analyze/function-fetch', state: { pack_id: item.pack_id } }} align="center">
-                                    <Col span={4} className={classes.packGutterBox} >
-                                        <Row className={classes.nameGutterBox}>{item.name}</Row>
+                                <Col span={4} className={classes.packGutterBox} >
+                                    <Row className={classes.nameGutterBox}>
+                                        <Col span={20}>{item.name}</Col>
+                                        <Col span={4}>
+                                            {/* <a onClick={this.showDetailFWInfo(item).bind(this)}>固件分析详情</a> */}
+                                            <Tooltip placement="top" title="固件分析详情">
+                                                <a style={{ color: '#880e4f' }} onClick={this.showDetailFWInfo(item).bind(this)}><Icon type="plus-circle-o" /></a>
+                                            </Tooltip>
+                                        </Col>
+                                    </Row>
+                                    <Link to={{ pathname: '/home/firmware-analyze/function-fetch', state: { pack_id: item.pack_id } }} align="center">
                                         <Row>
-                                            <Col className={classes.fileGutterBox}>
+                                            <Col className={classes.fileGutterBox} align="center">
+                                                <p>{"XXX架构"}</p>
                                                 <p>{"可执行文件" + item.exeFileNum + "个"}</p>
                                                 <p>{"系统镜像文件" + item.systemMirrorNum + "个"}</p>
-                                                <p>{"文件系统镜像文件" + item.fileMirrorNum + "个"}</p>
+                                                {/* <p>{"文件系统镜像文件" + item.fileMirrorNum + "个"}</p> */}
                                             </Col>
                                         </Row>
-                                    </Col>
-                                </Link>
+                                    </Link>
+                                </Col>
                             ))}
                         </Row>
                     </Card>
@@ -215,7 +238,7 @@ class FirmwarePackageView extends React.Component {
                     >
                         <List
                             size="large"
-                            header={<div style={{color: 'red', fontSize: 14, fontWeight: 'bold'}}>{'未完成任务'}</div>}
+                            header={<div style={{ color: 'red', fontSize: 14, fontWeight: 'bold' }}>{'未完成任务'}</div>}
                             //bordered
                             dataSource={packageList}
                             renderItem={item =>
@@ -229,7 +252,7 @@ class FirmwarePackageView extends React.Component {
                         />
                         <List
                             size="large"
-                            header={<div style={{color: 'green', fontSize: 12, fontWeight: 'bold'}}>{'已完成任务'}</div>}
+                            header={<div style={{ color: 'green', fontSize: 12, fontWeight: 'bold' }}>{'已完成任务'}</div>}
                             //bordered
                             dataSource={packageList}
                             renderItem={item =>
@@ -242,6 +265,7 @@ class FirmwarePackageView extends React.Component {
                                 </List.Item>}
                         />
                     </Drawer>
+                    {this.state.detailFWInfoPreview && <DetailFWInfo selectFWItem={this.state.selectFWItem} actioncb={this.handleCloseDetailFWInfo} />}
                 </Skeleton>
             </div >
         );

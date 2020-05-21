@@ -5,7 +5,7 @@ import { withStyles } from '@material-ui/core/styles';
 
 import { observer, inject } from 'mobx-react'
 
-import { Skeleton, Card, Table, Button, message, Upload, Row, Col, Popconfirm } from 'antd'
+import { Modal, Skeleton, Card, Table, Button, message, Upload, Row, Col, Popconfirm, Input } from 'antd'
 import { GetMainViewHeight, GetMainViewMinHeight, GetMainViewMinWidth } from '../../utils/PageUtils'
 import EllipsisText from '../../components/widgets/EllipsisText';
 import { actionType } from '../../global/enumeration/ActionType';
@@ -38,6 +38,9 @@ class SystemLogsView extends React.Component {
             currentPage: 1,     // Table中当前页码（从 1 开始）
             totalResult: 0,
             recordChangeID: -1,
+            selectedRowKeys: [], // Check here to configure the default column
+            inputFileNameVisible: false,
+            inputFileName: this.getDefaultFileName(),
         }
         this.querySystemLogs(this.state.currentPage, this.state.pageSize);
     }
@@ -189,7 +192,7 @@ class SystemLogsView extends React.Component {
     getTableColumns = () => {
         const ratio = 1;
         const { logs } = this.state;
-        const tableColumns = [
+        const constantTableColumns = [
             {
                 title: '序号', dataIndex: 'index', key: 'key', width: 80,
             },
@@ -245,6 +248,8 @@ class SystemLogsView extends React.Component {
                 ),
             },
         ];
+        // 查询定制日志项，构造tableColumns
+        let tableColumns = constantTableColumns;
         this.setState({ columns: tableColumns });
     }
 
@@ -265,12 +270,22 @@ class SystemLogsView extends React.Component {
         this.querySystemLogs(currentPage, pageSize);
     }
 
+    onSelectChange = selectedRowKeys => {
+        console.log('selectedRowKeys changed: ', selectedRowKeys);
+        this.setState({ selectedRowKeys });
+    };
+
     getTableProps() {
-        const { totalResult, scrollWidth, scrollHeight, logs, columns } = this.state;
+        const { selectedRowKeys, totalResult, scrollWidth, scrollHeight, logs, columns } = this.state;
         //let newScrollHeight = scrollHeight > 500 ? scrollHeight - 80 : scrollHeight;
         let self = this;
+        const rowSelection = {
+            selectedRowKeys,
+            onChange: this.onSelectChange,
+        };
 
         const tableProps = {
+            rowSelection: { rowSelection },
             columns: columns,
             rowKey: record => record.uuid,
             dataSource: logs,
@@ -300,7 +315,29 @@ class SystemLogsView extends React.Component {
     }
 
     downloadLogRecords = () => {
-        //
+        this.setState({ inputFileNameVisible: true });
+    }
+
+    handleInputFileNameCancel = () => {
+        this.setState({ inputFileNameVisible: false });
+    }
+
+    handleInputFileNameOk = () => {
+        if (this.state.inputFileName === '') {
+            message.info('请输入文件名');
+        } else if (this.state.selectedRowKeys.length <= 0) {
+            message.info('请选择日志记录');
+        } else {
+            // 生成文件名为inputFileName的报告文件
+            message.info(this.state.inputFileName + '已经生成');
+            this.setState({ inputFileNameVisible: false });
+        }
+    }
+
+    handleFileNameChange = (event) => {
+        this.setState({
+            inputFileName: event.target.value,
+        })
     }
 
     beforeUpload = (file) => {
@@ -361,6 +398,14 @@ class SystemLogsView extends React.Component {
         }
     };
 
+    getDefaultFileName = () => {
+        let now = new Date();
+        let month = (10 > (now.getMonth() + 1)) ? '0' + (now.getMonth() + 1) : now.getMonth() + 1;
+        let day = (10 > now.getDate()) ? '0' + now.getDate() : now.getDate();
+        let today = now.getFullYear() + month + day;
+        return 'back' + today;
+    }
+
     getLogActions = () => {
         return (
             <span>
@@ -379,7 +424,15 @@ class SystemLogsView extends React.Component {
                         </Upload>
                     </Col>
                     <Col span={8} offset={1}>
-                        <Button size={'large'} type='primary' onClick={this.downloadLogRecords}>日志记录下载</Button>
+                        <Button size={'large'} type='primary' onClick={this.downloadLogRecords}>日志记录生成</Button>
+                        <Modal
+                            title="请输入文件名称"
+                            visible={this.state.inputFileNameVisible}
+                            onOk={this.handleInputFileNameOk}
+                            onCancel={this.handleInputFileNameCancel}
+                        >
+                            <Input defaultValue={this.state.inputFileName} onChange={this.handleFileNameChange.bind(this)}></Input>
+                        </Modal>
                     </Col>
                 </Row>
                 {/* <Button size={'large'} type='primary' style={{ marginLeft: '16px' }} onClick={this.uploadLogRecords}>日志记录上传</Button> */}

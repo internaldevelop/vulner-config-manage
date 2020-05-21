@@ -43,6 +43,7 @@ class DataBackupView extends React.Component {
             selectedRowKeys: [], // Check here to configure the default column
             fileName: this.getDefaultFileName(),
             logConfigs: [],
+
             columns: Column,
             pageSize: DEFAULT_PAGE_SIZE,
             scrollWidth: 800,        // 表格的 scrollWidth
@@ -83,8 +84,8 @@ class DataBackupView extends React.Component {
         });
     }
 
-    getSystemConfigs() {///firmware-analyze/system/read_config
-        RestReq.asyncGet2(this.getSystemConfigsCB, '/system/read_config');
+    getSystemConfigs() {
+        RestReq.asyncGet(this.getSystemConfigsCB, '/firmware-analyze/system/read_config');
     }
 
     getLogValue = (item) => {
@@ -142,7 +143,7 @@ class DataBackupView extends React.Component {
             // logConfgisDic.type = item 则key为'type'而不是log.name的值
         }
         let result = JSON.stringify({ log_configs: logConfigsDic });
-        RestReq.asyncPost2(this.saveDataCB, '/system/write_config', { config_key: this.setState.fileName, sys_config: result });
+        RestReq.asyncPost(this.saveDataCB, '/firmware-analyze/system/write_config', { config_key: this.setState.fileName, sys_config: result });
     }
 
     render() {
@@ -158,8 +159,10 @@ class DataBackupView extends React.Component {
             <div>
                 <Skeleton loading={!userStore.isNormalUser} active avatar>
                     <div style={{ minWidth: GetMainViewMinWidth(), minHeight: GetMainViewMinHeight() }}>
-                        <Card title={'系统备份'} style={{ width: '100%', height: '100%' }}
-                        >
+                        <Card title={'账户备份'} style={{ width: '100%', height: '100%' }}>
+                            
+                        </Card>
+                        <Card title={'日志备份'} style={{ width: '100%', height: '100%' }}>
                             <Row gutter={[16, 16]}>
                                 {logConfigs.map((item, index) => (
                                     <Col span={12}>

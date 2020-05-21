@@ -14,16 +14,13 @@ const hostMenus = [
         ]
     },
     {
-        // title: '漏洞库管理',
-        // icon: 'project',
-        // key: '/home/vulner-manage',
-        // subs: [
-        //     { key: '/home/vulner-manage/info', title: '漏洞库信息管理', icon: 'exception', },
-        //     { key: '/home/vulner-stat', title: '漏洞利用库统计', icon: 'line-chart', },
-        // ]
         title: '漏洞库管理',
         icon: 'project',
-        key: '/home/vulner-manage/info',
+        key: '/home/vulner-manage',
+        subs: [
+            { key: '/home/vulner-manage/info', title: '漏洞库信息管理', icon: 'exception', },
+            { key: '/home/vulner-stat', title: '漏洞利用库统计', icon: 'line-chart', },
+        ]
     },
     {
         title: '性能监控',
@@ -37,6 +34,7 @@ const hostMenus = [
         subs: [
             { key: '/home/log-manage/log-custom', title: '日志格式定制', icon: 'book', },
             { key: '/home/log-manage/system-logs', title: '系统日志', icon: 'alert', },
+            { key: '/home/log-manage/log-download', title: '日志下载', icon: 'download' },
         ]
     },
     {

@@ -1,5 +1,4 @@
 import { withStyles } from '@material-ui/core/styles';
-import Typography from '@material-ui/core/Typography';
 import CodeMirror from '@uiw/react-codemirror';
 import { Modal, Card, Col, Input, message, Row, Select, Skeleton, Tree } from 'antd';
 import 'codemirror/addon/comment/comment';
@@ -29,11 +28,8 @@ let socket = null;
 let fileListData = [];
 let expandedChildNum = 0;
 let firstMatchedIndex = 0;
-const Option = Select.Option;
-const DEFAULT_PAGE_SIZE = 10;
 const { Search } = Input;
-const FUNCTION_TREE_HEIGHT = 700;
-const FILE_TREE_HEIGHT = 800;
+const TREE_HEIGHT = 1000;
 const styles = theme => ({
     iconButton: {
         margin: 0,
@@ -56,7 +52,7 @@ const styles = theme => ({
         borderRadius: 4,
         overflowY: 'auto',
         overflowX: 'hidden',
-        height: FILE_TREE_HEIGHT,
+        height: TREE_HEIGHT,
     },
     functionTreeContainer: {
         border: 1,
@@ -64,7 +60,7 @@ const styles = theme => ({
         borderRadius: 4,
         overflow: 'auto',
         overflowX: 'hidden',
-        height: FUNCTION_TREE_HEIGHT,
+        height: TREE_HEIGHT,
     },
     loadingContainer: {
         position: 'absolute',
@@ -110,6 +106,10 @@ class FirmwareFunctionView extends React.Component {
             isFunctionAreaVisible: false,
             functionPreviewImage: null,
             functionPreviewVisible: false,
+            controlPreviewImage: null,
+            controlPreviewVisible: false,
+            dependencyPreviewImage: null,
+            dependencyPreviewVisible: false,
         }
         this.getPackExeFileTree();
     }
@@ -119,7 +119,7 @@ class FirmwareFunctionView extends React.Component {
         if (this.props.location.state !== undefined) {
             pack_id = this.props.location.state.pack_id;
         }
-        RestReq.asyncGet2(this.getPackExeFileTreeCB, '/fw_analyze/pack/exec_files_tree', { pack_id, tree_type: 'antd' });
+        RestReq.asyncGet(this.getPackExeFileTreeCB, '/firmware-analyze/fw_analyze/pack/exec_files_tree', { pack_id, tree_type: 'antd' });
     }
 
     getPackExeFileTreeCB = (data) => {
@@ -213,13 +213,6 @@ class FirmwareFunctionView extends React.Component {
         this.setState({ percent: payload.percent });
     }
 
-    isVisibleProgress = () => {
-        if (this.state.selectedFirmwareTaskId !== '' && this.state.percentage !== 100) {
-            return true;
-        }
-        return false;
-    }
-
     getFunctionsCB = (data) => {
         let functions = [];
         if (data.code !== 'ERROR_OK')
@@ -240,15 +233,6 @@ class FirmwareFunctionView extends React.Component {
             return functionItem;
         })
         this.setState({ isFunctionAreaVisible: true, firmwareFunctionList: functions, functionTreeData, functionsListData, expandedFunctionKeys, percentage: 100 });
-    }
-
-    getAsyncFunction = (firmware) => {
-        if (firmware !== null) {
-            // 根据firmware查询返回所有的函数 中间函数 汇编函数等
-            RestReq.asyncGet(this.getAsyncFunctionsCB, '/firmware-analyze/fw_analyze/async_funcs/list', { file_id: firmware.firmware_id, }, { token: false });
-            this.setState({ selectedFirmwareId: firmware.firmware_id, percentage: 0, functionTreeData: [], functionsListData: [], code: '' });
-            message.info("开始抽取函数");
-        }
     }
 
     updateCode = (newCode) => {
@@ -273,67 +257,6 @@ class FirmwareFunctionView extends React.Component {
         return null;
     }
 
-    constructListData = (functions) => {
-        let methods = [];
-        for (let fun of functions) {
-            let item = { name: fun.name, key: fun.addr, };
-            methods.push(item);
-        }
-        return methods;
-    }
-
-    constructTreeData = (functions) => {
-        let methods = [];
-        for (let fun of functions) {
-            let item = { title: fun.name, key: fun.addr, };
-            methods.push(item);
-        }
-        let treeData = [{
-            title: '函数列表', key: 'methodList', children: methods,
-        },];
-        return treeData;
-    }
-
-    getAsyncFunctionsCB = (data) => {
-        if (data.code !== 'ERROR_OK' || data.payload === undefined || data.payload.task_id === undefined)
-            return;
-        let firmwareList = this.state.firmwareList;
-        for (let item of firmwareList) {
-            if (item.firmware_id === this.state.selectedFirmwareId) {
-                item.task_id = data.payload.task_id;
-                break;
-            }
-        }
-        this.setState({ selectedFirmwareTaskId: data.payload.task_id, firmwareList });
-    }
-
-    getAllFunctionTaskInfoCB = (data) => {
-        let functions = [];
-        if (data.code !== 'ERROR_OK')
-            return;
-
-        if (data.code === 'ERROR_OK' && data.payload.percentage < 100) {
-            this.setState({ percentage: data.payload.percentage, functionTreeData: [], functionsListData: [], });
-            message.info("函数抽取进度：" + data.payload.percentage);
-            return;
-        }
-        let functionTreeData = [];
-        let functionsListData = [];
-        let expandedFunctionKeys = [];
-        functions = data.payload.result.functions.map((item, index) => {
-            let functionItem = DeepClone(item);
-            functionItem.index = index + 1;
-            functionItem.key = index + 1;
-            let treeDataitem = { title: functionItem.name, key: functionItem.addr, };
-            //let expandedKeyItem = { key: functionItem.addr,}
-            functionTreeData.push(treeDataitem);
-            functionsListData.push(treeDataitem);
-            expandedFunctionKeys.push(functionItem.addr);
-            return functionItem;
-        })
-        this.setState({ firmwareFunctionList: functions, functionTreeData, functionsListData, expandedFunctionKeys, percentage: 100 });
-    }
-
     getFunctionCodeCB = (data) => {
         if (data.code !== 'ERROR_OK') {
             return;
@@ -342,20 +265,11 @@ class FirmwareFunctionView extends React.Component {
         this.setState({ vexCode: data.payload.vex, asmCode: data.payload.asm, });
     }
 
-    getAyncFunctionCodeCB = (data) => {
-        if (data.code !== 'ERROR_OK' || data.payload === undefined || data.payload.task_id === undefined) {
-            this.setState({ asmCode: '', vexCode: '' });
-            return;
-        }
-        RestReq.asyncGet(this.getFunctionCodeCB, '/firmware-analyze/fw_analyze/task_result', { task_id: data.payload.task_id }, { token: false });
-        this.setState({ selectedFirmwareFunctionTaskId: data.payload.task_id, asmCode: '', vexCode: '' });
-    }
-
     onSelectMethod = (selectedKeys, info) => {
         if (selectedKeys.length > 0) {
             const firmware_id = this.state.selectedFirmwareId;
-            RestReq.asyncGet2(this.getFunctionCodeCB, '/fw_analyze/cfg/func_info', { file_id: firmware_id, func_addr: '0x4004b0' });//TODO selectedKeys[0]
-            this.setState({ selectedFirmwareFunctionId: '0x4004b0' });//selectedKeys[0]
+            RestReq.asyncGet(this.getFunctionCodeCB, '/firmware-analyze/fw_analyze/cfg/func_info', { file_id: firmware_id, func_addr: selectedKeys[0] });
+            this.setState({ functionSearchValue: '', selectedFirmwareFunctionId: selectedKeys[0] });
         }
     }
 
@@ -378,9 +292,9 @@ class FirmwareFunctionView extends React.Component {
         if (selectedKeys.length > 0) {
             let fileInfo = this.getFileInfo(selectedKeys[0]);
             // 根据firmware查询返回所有的函数 中间函数 汇编函数等
-            let fileId = 'eb5d9195-4bff-4b5c-b5ab-8aeb0ded60d0';//TODO 暂时数据 selectedKeys[0]
-            RestReq.asyncGet2(this.getFunctionsCB, '/fw_analyze/cfg/func_list', { file_id: fileId });//selectedKeys[0] 2  15e064d0-5153-4961-b32d-a5679290c6af
-            this.setState({ fileName: fileInfo.title, filePath: fileInfo.path, selectedFirmwareId: fileId, percentage: 0, functionTreeData: [], functionsListData: [], asmCode: '', vexCode: '' });
+            let fileId = '08f4ca69-8705-496b-9868-db332960a671';//TODO 暂时数据 selectedKeys[0]
+            RestReq.asyncGet(this.getFunctionsCB, '/firmware-analyze/fw_analyze/cfg/func_list', { file_id: fileId });//selectedKeys[0] 2  15e064d0-5153-4961-b32d-a5679290c6af
+            this.setState({ selectedFirmwareFunctionId: '', functionSearchValue: '', fileSearchValue: '', fileName: fileInfo.title, filePath: fileInfo.path, selectedFirmwareId: fileId, percentage: 0, functionTreeData: [], functionsListData: [], asmCode: '', vexCode: '' });
         }
     }
 
@@ -403,7 +317,7 @@ class FirmwareFunctionView extends React.Component {
         const functionTreeLen = this.state.functionTreeData.length;
         if (functionTreeLen > 0 && expandKeyNum > 0 && document.getElementById('functionTree') !== undefined
             && document.getElementById('functionTree') !== null) {
-            let scrollHeight = document.getElementById('functionTree').clientHeight;//scrollHeight
+            let scrollHeight = document.getElementById('functionTree').scrollHeight;//clientHeight
             let scrollValue = (parseInt)(((parseFloat(index)) / functionTreeLen) * scrollHeight);
             if (scrollValue >= 0) {
                 document.getElementById('functionTree').scrollTop = scrollValue; //通过scrollTop设置滚动到指定位置
@@ -416,44 +330,21 @@ class FirmwareFunctionView extends React.Component {
         let fileTreeLen = this.state.fileTreeData.length;
         if (fileTreeLen > 0 && expandedKeyNum > 0 && document.getElementById('fileTree') !== undefined
             && document.getElementById('fileTree') !== null) {
-            let scrollHeight = document.getElementById('fileTree').clientHeight;//scrollHeight
+            let scrollHeight = document.getElementById('fileTree').scrollHeight;
             let scrollValue = (parseInt)(((parseFloat(firstMatchedIndex)) / expandedKeyNum) * scrollHeight);
             if (scrollValue >= 0 && expandedKeyNum !== fileTreeLen) {
-                document.getElementById('fileTree').scrollTop = scrollValue; //通过scrollTop设置滚动到指定位置
-            } else {
-                document.getElementById('fileTree').scrollTop = 0;
-            }
-        }
-    }
-
-    scrollFileTree = () => {
-        const { fileSearchValue } = this.state;
-        if (document.getElementById('fileTree') !== undefined && fileListData.length > 0 && fileSearchValue === '') {
-            document.getElementById('fileTree').scrollTop = 0;
-            return;
-        }
-        else {
-            let scrollValue = 0;
-            let scrollHeight = document.getElementById('fileTree').scrollHeight;
-            for (let index in fileListData) {
-                if (fileListData[index].title.indexOf(fileSearchValue) > -1) {
-                    scrollValue = (parseInt)(((parseFloat(index)) / fileListData.length) * scrollHeight);
-                    break;
-                }
-            }
-            if (document.getElementById('fileTree') !== undefined && scrollValue >= 0) {
                 document.getElementById('fileTree').scrollTop = scrollValue; //通过scrollTop设置滚动到指定位置
             }
         }
     }
 
     getExpandedItemLen = (expandedNum, expandedFileKeys, data) => {
-        for(let fileKey of expandedFileKeys) {
+        for (let fileKey of expandedFileKeys) {
             for (let item of data) {
                 if (item.key === fileKey) {
                     if (item.children.length > 0)
-                    expandedNum += item.children.length;
-                    this.getExpandedItemLen(expandedNum, );
+                        expandedNum += item.children.length;
+                    this.getExpandedItemLen(expandedNum);
                     break;
                 }
             }
@@ -474,14 +365,14 @@ class FirmwareFunctionView extends React.Component {
                 let num = 0;
                 // 记录第一次匹配的节点以及所有需要展开的子节点总数
                 for (let child of node.children) {
-                    num ++;
-                    if(child.key === key) {
+                    num++;
+                    if (child.key === key) {
                         if (firstMatchedIndex === 0) {
-                            firstMatchedIndex = num + 1;
+                            firstMatchedIndex = num;
                         }
                         parentKey = node.key;
                         let isAddedList = false;
-                        for (let item of expandedFileKeyList) { 
+                        for (let item of expandedFileKeyList) {
                             if (item === parentKey) {
                                 isAddedList = true;
                             }
@@ -497,28 +388,12 @@ class FirmwareFunctionView extends React.Component {
                 if (!isHasNode && this.getParentKey(expandedFileKeyList, key, node.children)) {
                     parentKey = this.getParentKey(expandedFileKeyList, key, node.children);
                 }
-                // if (node.children.some(item => item.key === key)) {
-                //     parentKey = node.key;
-                //     let isAddedList = false;
-                //     for (let item of expandedFileKeyList) { 
-                //         if (item === parentKey) {
-                //             isAddedList = true;
-                //         }
-                //     }
-                //     if (!isAddedList) {
-                //         expandedFileKeyList.push(parentKey);
-                //         expandedChildNum += node.children.length;
-                //     }
-                // } else if (this.getParentKey(expandedFileKeyList, key, node.children)) {
-                //     parentKey = this.getParentKey(expandedFileKeyList, key, node.children);
-                // }
             }
         }
         return parentKey;
     };
 
-    onFileInputChange = e => {
-        const { value } = e.target;
+    onFileInputSearch = value => {
         const { fileTreeData } = this.state;
         expandedChildNum = 0;
         firstMatchedIndex = 0;
@@ -548,25 +423,26 @@ class FirmwareFunctionView extends React.Component {
                 autoFileExpandParent: true,
             });
         }
+    }
+
+    onFileInputChange = e => {
+        const { value } = e.target;
+        this.onFileInputSearch(value);
     };
 
     onMethodInputChange = e => {
         const { value } = e.target;
-        // const { functionTreeData } = this.state;
-        // if (functionTreeData.length > 0) {
-        //     this.scrollFunctionTree();
-        // }
         this.setState({
             functionSearchValue: value,
             autoFunctionExpandParent: true,
         });
     };
 
-    onMethodSearch = () => {
-        const { functionTreeData } = this.state;
-        if (functionTreeData.length > 0) {
-            this.scrollFunctionTree();
-        }
+    onMethodSearch = value => {
+        this.setState({
+            functionSearchValue: value,
+            autoFunctionExpandParent: true,
+        });
     }
 
     scrollFunctionTree = () => {
@@ -602,7 +478,49 @@ class FirmwareFunctionView extends React.Component {
     getGraphInfo = () => {
         const firmware_id = this.state.selectedFirmwareId;
         const method_id = this.state.selectedFirmwareFunctionId;
-        RestReq.asyncGet2(this.getGraphInfoCB, '/fw_analyze/cfg/call_graph_a', { file_id: firmware_id, func_addr: method_id });
+        RestReq.asyncGet(this.getGraphInfoCB, '/firmware-analyze/fw_analyze/cfg/call_graph_a', { file_id: firmware_id, func_addr: method_id });
+    }
+
+    handleControlPreviewCancel = () => this.setState({ controlPreviewVisible: false });
+
+    handleDependencyPreviewCancel = () => this.setState({ dependencyPreviewVisible: false });
+
+    getControlGraphInfoCB = (data) => {
+        if (data.code !== 'ERROR_OK') {
+            return;
+        } else {
+            this.setState({ controlPreviewImage: data.payload.cfg_graph, controlPreviewVisible: true });
+        }
+    }
+
+    getControlGraphInfo = () => {
+        const firmware_id = this.state.selectedFirmwareId;
+        const method_id = this.state.selectedFirmwareFunctionId;
+        RestReq.asyncGet(this.getControlGraphInfoCB, '/firmware-analyze/fw_analyze/cfg/cfg_graph', { file_id: firmware_id, func_addr: method_id });
+    }
+
+    getDependencyGraphInfoCB = (data) => {
+        if (data.code !== 'ERROR_OK') {
+            return;
+        } else {
+            this.setState({ dependencyPreviewImage: data.payload.cdg_graph, dependencyPreviewVisible: true });
+        }
+    }
+
+    getDependencyGraphInfo = () => {
+        const firmware_id = this.state.selectedFirmwareId;
+        const method_id = this.state.selectedFirmwareFunctionId;
+        RestReq.asyncGet(this.getDependencyGraphInfoCB, '/firmware-analyze/fw_analyze/cfg/cdg_graph', { file_id: firmware_id, func_addr: method_id });
+    }
+
+    backPackPage = () => {
+
+    }
+
+    getExtra() {
+        return (
+            <a style={{ color: 'white' }} href="./#/home/firmware-analyze/package-fetch" >返回</a>
+        );
     }
 
     render() {
@@ -630,8 +548,9 @@ class FirmwareFunctionView extends React.Component {
             gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
         };
 
-        const { functionPreviewVisible, functionPreviewImage, fileName, filePath, functionSearchValue, expandedFunctionKeys, autoFunctionExpandParent,
-            fileSearchValue, expandedFileKeys, autoFileExpandParent, isFunctionAreaVisible,
+        const { functionPreviewVisible, functionPreviewImage, controlPreviewVisible, controlPreviewImage,
+            dependencyPreviewImage, dependencyPreviewVisible, functionSearchValue, expandedFunctionKeys,
+            autoFunctionExpandParent, fileSearchValue, expandedFileKeys, autoFileExpandParent, isFunctionAreaVisible,
             fileTreeData, functionTreeData, scrollHeight } = this.state;
         const { classes } = this.props;
         const userStore = this.props.userStore;
@@ -642,7 +561,7 @@ class FirmwareFunctionView extends React.Component {
         const loopFunctionTree = data =>
             data.map(item => {
                 const index = item.title.indexOf(functionSearchValue);
-                if (index > -1 && !scrollFunction) {
+                if (index > -1 && !scrollFunction && functionSearchValue !== '') {
                     this.computeFunctionExpandKeyRateAndScroll(firstFunctionMatchedIndex);
                     scrollFunction = true;
                 }
@@ -673,7 +592,7 @@ class FirmwareFunctionView extends React.Component {
         const loopFileTree = data =>
             data.map(item => {
                 const index = item.title.indexOf(fileSearchValue);
-                if (index > -1 && !scrollTree) {
+                if (index > -1 && !scrollTree && fileSearchValue !== '') {
                     this.computeFileExpandKeyRateAndScroll();
                     scrollTree = true;
                 }
@@ -704,8 +623,8 @@ class FirmwareFunctionView extends React.Component {
                 <Skeleton loading={!userStore.isNormalUser} active avatar>
                     <Row>
                         <Col span={6}>
-                            <Card title={'文件结构'} style={{ height: scrollHeight }} headStyle={MAntdCard.headerStyle('info-2')}>
-                                <Search id='fileSearchInput' placeholder="文件搜索" onChange={this.onFileInputChange} />
+                            <Card title={'文件结构'} style={{ height: scrollHeight }} headStyle={MAntdCard.headerStyle('default')}>
+                                <Search allowClear id='fileSearchInput' placeholder="文件搜索" onChange={this.onFileInputChange} onSearch={this.onFileInputSearch} />
                                 <div id='fileTree' className={classes.fileTreeContainer}>
                                     <Tree
                                         onSelect={this.onSelectFile}
@@ -718,21 +637,21 @@ class FirmwareFunctionView extends React.Component {
                                 </div>
                             </Card>
                         </Col>
-                        {isFunctionAreaVisible &&
-                            <Col span={18}>
-                                <Card title={'文件详情'} style={{ height: scrollHeight }} headStyle={MAntdCard.headerStyle('info-2')}>
-                                    <Row>
+                        <Col span={18}>
+                            <Card title={'函数信息'} extra={this.getExtra()} style={{ height: scrollHeight }} headStyle={MAntdCard.headerStyle('default')}>
+                                {/* <Row>
                                         <Col span={12}>
                                             {"文件名称：" + fileName}
                                         </Col>
                                         <Col span={12}>
                                             {"文件路径：" + filePath}
                                         </Col>
-                                    </Row>
-                                    <br />
+                                    </Row> 
+                                    <br />*/}
+                                {isFunctionAreaVisible &&
                                     <Row>
                                         <Col span={7} >
-                                            <Search id='functionSearchInput' placeholder="函数搜索" onChange={this.onMethodInputChange} />{/*onSearch={this.onMethodSearch}  */}
+                                            <Search allowClear id='functionSearchInput' placeholder="函数搜索" onChange={this.onMethodInputChange} onSearch={this.onMethodSearch} />
                                             <div id='functionTree' className={classes.functionTreeContainer}>
                                                 <Tree
                                                     onSelect={this.onSelectMethod}
@@ -746,17 +665,17 @@ class FirmwareFunctionView extends React.Component {
                                         <Col span={17}>
                                             {/* {this.state.asmCode === '' && this.state.selectedFirmwareFunctionId !== '' && <Spin style={{ marginTop: 50, marginLeft: 50 }} tip="Loading..."></Spin>} */}
                                             {this.state.asmCode !== ''
-                                                && <Card title="汇编代码">
+                                                && <Card title="汇编代码" headStyle={MAntdCard.headerStyle('info-2')}>
                                                     <CodeMirror ref="editor" value={this.state.asmCode} /*onChange={this.updateCode}*/ options={optionsAsm} />
                                                 </Card>
                                             }
                                             {this.state.vexCode !== ''
-                                                && <Card title="中间代码">
+                                                && <Card title="中间代码" headStyle={MAntdCard.headerStyle('info-2')}>
                                                     <CodeMirror ref="editor" value={this.state.vexCode} /*onChange={this.updateCode}*/ options={optionsVex} />
                                                 </Card>
                                             }
                                             {this.state.vexCode !== ''
-                                                && <Card title="函数流程图" extra={
+                                                && <Card title="函数调用关系图" headStyle={MAntdCard.headerStyle('info-2')} extra={
                                                     <div>
                                                         <a onClick={this.getGraphInfo.bind(this)}>详细</a>
                                                     </div>
@@ -766,10 +685,33 @@ class FirmwareFunctionView extends React.Component {
                                             <Modal visible={functionPreviewVisible} footer={null} onCancel={this.handleFunctionPreviewCancel}>
                                                 <img alt="functionPreview" style={{ width: '100%' }} src={'data:image/jpg/png/gif;base64,' + functionPreviewImage} />
                                             </Modal>
+
+                                            {this.state.vexCode !== ''
+                                                && <Card title="函数控制流程图" headStyle={MAntdCard.headerStyle('info-2')} extra={
+                                                    <div>
+                                                        <a onClick={this.getControlGraphInfo.bind(this)}>详细</a>
+                                                    </div>
+                                                }>
+                                                </Card>
+                                            }
+                                            <Modal visible={controlPreviewVisible} footer={null} onCancel={this.handleControlPreviewCancel}>
+                                                <img alt="controlPreview" style={{ width: '100%' }} src={'data:image/jpg/png/gif;base64,' + controlPreviewImage} />
+                                            </Modal>
+                                            {this.state.vexCode !== ''
+                                                && <Card title="函数控制依赖图" headStyle={MAntdCard.headerStyle('info-2')} extra={
+                                                    <div>
+                                                        <a onClick={this.getDependencyGraphInfo.bind(this)}>详细</a>
+                                                    </div>
+                                                }>
+                                                </Card>
+                                            }
+                                            <Modal visible={dependencyPreviewVisible} footer={null} onCancel={this.handleDependencyPreviewCancel}>
+                                                <img alt="dependencyPreview" style={{ width: '100%' }} src={'data:image/jpg/png/gif;base64,' + dependencyPreviewImage} />
+                                            </Modal>
                                         </Col>
-                                    </Row>
-                                </Card>
-                            </Col>}
+                                    </Row>}
+                            </Card>
+                        </Col>
                     </Row>
                 </Skeleton>
             </div>

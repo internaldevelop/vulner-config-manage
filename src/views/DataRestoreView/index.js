@@ -66,7 +66,7 @@ class DataRestoreView extends React.Component {
     }
 
     getAllConfigs() {
-        RestReq.asyncGet2(this.getAllConfigsCB, '/system/read_config', { all_config: 1 });
+        RestReq.asyncGet(this.getAllConfigsCB, '/firmware-analyze/system/read_config', { all_config: 1 });
     }
 
     handleSelectManager = (value) => {
@@ -94,7 +94,7 @@ class DataRestoreView extends React.Component {
     }
 
     restoreFactoryData = () => {
-        RestReq.asyncGet2(this.restoreFactoryDataCB, '/system/default_config');
+        RestReq.asyncGet(this.restoreFactoryDataCB, '/firmware-analyze/system/default_config');
     }
 
     restoreDataCB = (data) => {
@@ -108,7 +108,7 @@ class DataRestoreView extends React.Component {
     }
 
     restoreData = () => {
-        RestReq.asyncPost2(this.restoreDataCB, '/system/recover_config', {config_key: this.state.fileName});
+        RestReq.asyncPost(this.restoreDataCB, '/firmware-analyze/system/recover_config', {config_key: this.state.fileName});
     }
 
     setRowClassName = (record) => {

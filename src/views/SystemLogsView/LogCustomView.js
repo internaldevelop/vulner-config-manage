@@ -63,8 +63,8 @@ class LogCustomView extends React.Component {
             <FormControlLabel
                 control={
                     <Checkbox
-                        // color="green"
-                        //checked={this.isCheck(code)}
+                        //color="green"
+                        //checked={this.isCheck(code)}//检查目前是否选择状态
                         onChange={this.handleFieldChange(code)}
                         value={code}
                     />

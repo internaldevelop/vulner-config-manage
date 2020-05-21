@@ -168,8 +168,8 @@ class FirmwareFetchView extends React.Component {
 
     getAllFirmwares = (targetPage, pageSize) => {
         let startSet = (targetPage - 1) * pageSize + 1;
-        // TODO 提供分页功能,但是接口目前没有提供分页//firmware-analyze
-        RestReq.asyncGet2(this.getAllFirmwaresCB, '/fw_analyze/pack/all', { /*offset: startSet, count: pageSize*/ }, { token: false });
+        // TODO 提供分页功能,但是接口目前没有提供分页
+        RestReq.asyncGet(this.getAllFirmwaresCB, '/firmware-analyze/fw_analyze/pack/all', { /*offset: startSet, count: pageSize*/ }, { token: false });
     }
 
     getAllFirmwaresCB = (data) => {
@@ -195,12 +195,13 @@ class FirmwareFetchView extends React.Component {
 
     /** 处理页面变化（页面跳转/切换/每页记录数变化） */
     handlePageChange = (currentPage, pageSize) => {
-        this.setState({ currentPage, pageSize });
-        this.getAllFirmwares(currentPage, pageSize);
+        // TODO 目前没有提供分页功能 暂时不按照分页取数据
+        //this.setState({ currentPage, pageSize });
+        // this.getAllFirmwares(currentPage, pageSize);
     }
 
     render() {
-        const { currentPage, pageSize, totalResult, columns, showConfig, firmwareList, scrollWidth, scrollHeight } = this.state;
+        const { columns, showConfig, firmwareList } = this.state;
         let self = this;
         const { classes } = this.props;
         const userStore = this.props.userStore;
@@ -209,7 +210,7 @@ class FirmwareFetchView extends React.Component {
             <div>
                 <Skeleton loading={!userStore.isNormalUser} active avatar>
                     <FirmwareDownloadView onCallback={this.getAllFirmwares} />
-                    <Card title={'固件列表'} style={{ height: '100%' }} headStyle={MAntdCard.headerStyle('info-2')}>
+                    <Card title={'固件列表'} style={{ height: '100%' }} headStyle={MAntdCard.headerStyle('default')}>
                         <Table
                             columns={columns}
                             dataSource={firmwareList}
