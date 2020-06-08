@@ -10,6 +10,7 @@ import RestReq from '../../utils/RestReq';
 import { columns as Column } from './Column';
 import MAntdCard from '../../rlib/props/MAntdCard';
 import DetailFWInfo from './DetailFWInfo';
+import MStatCardNoIcon from '../../rlib/antdComponents/MStatCardNoIcon';
 
 const DEFAULT_PAGE_SIZE = 10;
 const styles = theme => ({
@@ -44,8 +45,8 @@ const styles = theme => ({
     fileGutterBox: {
         padding: 8,
         height: 100,
-        background: '#E6E6E6',
-        //background: '#D4F2E7',
+        //background: '#E6E6E6',
+        background: '#DDEBFF',
         //color: '#DC143C',
     }
 });
@@ -69,8 +70,42 @@ class FirmwarePackageView extends React.Component {
             taskManageVisible: false,
             detailFWInfoPreview: false,
             selectFWItem: null,
+            unDoneTasks: [],
+            doneTasks: [],
+            stats: this.initPackageStats(),
         }
         this.getAllPackages();
+    }
+
+    getAllTasksCB = (data) => {
+        let doneTasks = [];
+        let unDoneTasks = [];
+        if (data.code !== 'ERROR_OK' || !(data.payload instanceof Array))
+            return;
+
+        for (let item of data.payload) {
+            if (item.percentage === 100) {
+                doneTasks.push(item);
+            } else {
+                unDoneTasks.push(item);
+            }
+        }
+        this.setState({ unDoneTasks, doneTasks, taskManageVisible: true, });
+    }
+
+    initPackageStats() {
+        let stats = [];
+        stats.push({ name: 'packTotal', title: '固件包总数', value: 0, icon: 'database', bgColor: '#DEF2DD', fgColor: 'black' });
+        stats.push({ name: 'mirrorFileTotal', title: '镜像文件数', value: 0, icon: 'like', bgColor: '#F3E6FA', fgColor: 'black' });
+        stats.push({ name: 'exeFileTotal', title: '可执行文件数', value: 0, icon: 'dislike', bgColor: '#FFF2CC', fgColor: 'red' });
+        stats.push({ name: 'fileMirrorTotal', title: '文件系统镜像数', value: 0, icon: 'eye', bgColor: '#DDEBFF', fgColor: 'green' });
+        stats.push({ name: 'systemMirrorTotal', title: '系统镜像数', value: 0, icon: 'check-circle', bgColor: '#DEF2DD', fgColor: 'green' });
+        stats.push({ name: 'packageProcessed', title: '任务执行情况', value: '待定', icon: 'close-circle', bgColor: '#FFF2CC', fgColor: 'red' });
+        return stats;
+    }
+
+    getAllTasks = () => {
+        RestReq.asyncGet(this.getAllTasksCB, '/firmware-analyze/fw_analyze/task/query_all');
     }
 
     getAllPackages = () => {//'/firmware-analyze/fw_analyze/pack/all'
@@ -117,8 +152,14 @@ class FirmwarePackageView extends React.Component {
             packItem.exeFileNum = exeFileNum;
             return packItem;
         })
-
-        this.setState({ packageList: packages, packTotal, exeFileTotal, mirrorFileTotal, fileMirrorTotal, systemMirrorTotal });
+        const { stats } = this.state;
+        stats[0].value = packTotal;
+        stats[1].value = mirrorFileTotal;
+        stats[2].value = exeFileTotal;
+        stats[3].value = fileMirrorTotal;
+        stats[4].value = systemMirrorTotal;
+        stats[5].value = '待定';
+        this.setState({ stats, packageList: packages, packTotal, exeFileTotal, mirrorFileTotal, fileMirrorTotal, systemMirrorTotal });
     }
 
     componentDidMount() {
@@ -137,15 +178,8 @@ class FirmwarePackageView extends React.Component {
         window.removeEventListener('resize', this.handleResize.bind(this));
     }
 
-    getTaskInfo = () => {
-        // 读取任务进度信息 并且组装好
-    }
-
     showDownloadFWDrawer = () => {
-        this.getTaskInfo();
-        this.setState({
-            taskManageVisible: true,
-        });
+        this.getAllTasks();
     };
 
     onCloseDownloadFWDrawer = () => {
@@ -156,7 +190,7 @@ class FirmwarePackageView extends React.Component {
 
     getExtra() {
         return (
-            <a style={{ color: '#880e4f' }} onClick={this.showDownloadFWDrawer.bind(this)}>任务执行列表</a>
+            <a style={{ color: '#FF4500' }} onClick={this.showDownloadFWDrawer.bind(this)}>任务执行列表</a>
         );
     }
 
@@ -169,16 +203,23 @@ class FirmwarePackageView extends React.Component {
     }
 
     render() {
-        const { packTotal, mirrorFileTotal, fileMirrorTotal, systemMirrorTotal, exeFileTotal, packageList } = this.state;
+        const { doneTasks, unDoneTasks, packTotal, mirrorFileTotal, fileMirrorTotal, systemMirrorTotal, exeFileTotal, packageList } = this.state;
         const { classes } = this.props;
         const userStore = this.props.userStore;
         let self = this;
-
+        const { stats } = this.state;
+        let statSpan = 24 / stats.length;
         return (
             <div>
                 <Skeleton loading={!userStore.isNormalUser} active avatar>
                     <Card title={'固件包信息总览'} extra={this.getExtra()} style={{ height: '100%' }} headStyle={MAntdCard.headerStyle('default')}>
-                        <Row>
+                        <Row gutter={20} style={{ marginBottom: 20 }}>
+                            {stats.map((stat) => (<Col span={statSpan}>
+                                <MStatCardNoIcon myparams={stat} />
+                            </Col>))}
+                        </Row>
+
+                        {/* <Row>
                             <Col span={6}>
                                 {"固件包数量：" + packTotal}
                             </Col>
@@ -199,7 +240,7 @@ class FirmwarePackageView extends React.Component {
                             <Col span={6}>
                                 {"系统镜像总数：" + systemMirrorTotal}
                             </Col>
-                        </Row>
+                        </Row> */}
                     </Card>
                     <Card title={'固件包列表'} style={{ height: '100%' }} headStyle={MAntdCard.headerStyle('default')}>
                         <Row gutter={[16, 24]}>
@@ -231,7 +272,7 @@ class FirmwarePackageView extends React.Component {
                     <Drawer
                         title="任务执行列表"
                         placement="right"
-                        width={320}
+                        width={400}
                         closable={false}
                         onClose={this.onCloseDownloadFWDrawer}
                         visible={this.state.taskManageVisible}
@@ -240,28 +281,28 @@ class FirmwarePackageView extends React.Component {
                             size="large"
                             header={<div style={{ color: 'red', fontSize: 14, fontWeight: 'bold' }}>{'未完成任务'}</div>}
                             //bordered
-                            dataSource={packageList}
+                            dataSource={unDoneTasks}
                             renderItem={item =>
                                 <List.Item>
                                     <List.Item.Meta
-                                        title={item.name}
-                                        description={item.create_time}
+                                        title={item.process_file_name + ' ' + item.task_name}
+                                        description={item.start_time}
                                     />
-                                    <div>{'50%'}</div>
+                                    <div>{item.percentage + '%'}</div>
                                 </List.Item>}
                         />
                         <List
                             size="large"
-                            header={<div style={{ color: 'green', fontSize: 12, fontWeight: 'bold' }}>{'已完成任务'}</div>}
+                            header={<div style={{ color: '#32CD32', fontSize: 14, fontWeight: 'bold' }}>{'已完成任务'}</div>}
                             //bordered
-                            dataSource={packageList}
+                            dataSource={doneTasks}
                             renderItem={item =>
                                 <List.Item>
                                     <List.Item.Meta
-                                        title={item.name}/*固件名称 + 任务名称*/
-                                        description={item.create_time}
+                                        title={item.task_name}/*固件名称 + 任务名称*/
+                                        description={item.start_time}
                                     />
-                                    <div>{'100%'}</div>
+                                    <div>{item.percentage}</div>
                                 </List.Item>}
                         />
                     </Drawer>

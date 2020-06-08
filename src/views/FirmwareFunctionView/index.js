@@ -23,6 +23,7 @@ import { GetMainViewHeight } from '../../utils/PageUtils';
 import RestReq from '../../utils/RestReq';
 import { generateUuidStr } from '../../utils/tools';
 import MAntdCard from '../../rlib/props/MAntdCard';
+import MStatCardNoIcon from '../../rlib/antdComponents/MStatCardNoIcon';
 
 let socket = null;
 let fileListData = [];
@@ -110,6 +111,7 @@ class FirmwareFunctionView extends React.Component {
             controlPreviewVisible: false,
             dependencyPreviewImage: null,
             dependencyPreviewVisible: false,
+            stats: this.initFileStats(),
         }
         this.getPackExeFileTree();
     }
@@ -138,6 +140,16 @@ class FirmwareFunctionView extends React.Component {
                 this.generateFileList(data[i].children);
             }
         }
+    }
+
+    initFileStats() {
+        let stats = [];
+        stats.push({ name: 'stackSize', title: '栈空间大小', value: 112893, icon: 'database', bgColor: '#DEF2DD', fgColor: 'black' });
+        stats.push({ name: 'heapSize', title: '堆空间大小', value: 812893, icon: 'like', bgColor: '#F3E6FA', fgColor: 'black' });
+        stats.push({ name: 'arguments', title: '函数参数', value: 'test int\ntest2 flost', fontSize: 28, icon: 'dislike', bgColor: '#FFF2CC', fgColor: 'red' });
+        stats.push({ name: 'returns', title: '函数返回值', value: 'test 10000', fontSize: 28, icon: 'eye', bgColor: '#DDEBFF', fgColor: 'green' });
+        stats.push({ name: 'types', title: '变量类型', value: 'int a int b string c', fontSize: 28, icon: 'check-circle', bgColor: '#DEF2DD', fgColor: 'green' });
+        return stats;
     }
 
     componentDidMount() {
@@ -215,7 +227,7 @@ class FirmwareFunctionView extends React.Component {
 
     getFunctionsCB = (data) => {
         let functions = [];
-        if (data.code !== 'ERROR_OK')
+        if (data.code !== 'ERROR_OK' || data.payload === undefined || data.payload.functions === undefined)
             return;
 
         let functionTreeData = this.state.functionTreeData;
@@ -281,7 +293,7 @@ class FirmwareFunctionView extends React.Component {
             if (item.key === key) {
                 fileName = item.title;
                 filePath = item.file_path;
-                fileInfo = { title: fileName, path: filePath };
+                fileInfo = { title: fileName, path: filePath, };
                 break;
             }
         }
@@ -292,9 +304,9 @@ class FirmwareFunctionView extends React.Component {
         if (selectedKeys.length > 0) {
             let fileInfo = this.getFileInfo(selectedKeys[0]);
             // 根据firmware查询返回所有的函数 中间函数 汇编函数等
-            let fileId = '08f4ca69-8705-496b-9868-db332960a671';//TODO 暂时数据 selectedKeys[0]
+            let fileId = selectedKeys[0]; //'08f4ca69-8705-496b-9868-db332960a671';//TODO 暂时数据 selectedKeys[0]
             RestReq.asyncGet(this.getFunctionsCB, '/firmware-analyze/fw_analyze/cfg/func_list', { file_id: fileId });//selectedKeys[0] 2  15e064d0-5153-4961-b32d-a5679290c6af
-            this.setState({ selectedFirmwareFunctionId: '', functionSearchValue: '', fileSearchValue: '', fileName: fileInfo.title, filePath: fileInfo.path, selectedFirmwareId: fileId, percentage: 0, functionTreeData: [], functionsListData: [], asmCode: '', vexCode: '' });
+            this.setState({ selectedFirmwareFunctionId: '', functionSearchValue: '', fileSearchValue: '', fileName: fileInfo.title, filePath: fileInfo.path, selectedFirmwareId: fileId, percentage: 0, asmCode: '', vexCode: '' });//functionTreeData: [], functionsListData: [],
         }
     }
 
@@ -523,6 +535,14 @@ class FirmwareFunctionView extends React.Component {
         );
     }
 
+    getSpan = (stat) => {
+        if (stat.name == 'stackSize' || stat.name == 'heapSize') {
+            return 3;
+        } else {
+            return 6;
+        }
+    }
+
     render() {
         const optionsAsm = {
             theme: 'eclipse',
@@ -618,6 +638,9 @@ class FirmwareFunctionView extends React.Component {
                 };
             });
 
+        const { stats } = this.state;
+        let statSpan = 24 / stats.length;
+
         return (
             <div>
                 <Skeleton loading={!userStore.isNormalUser} active avatar>
@@ -638,8 +661,7 @@ class FirmwareFunctionView extends React.Component {
                             </Card>
                         </Col>
                         <Col span={18}>
-                            <Card title={'函数信息'} extra={this.getExtra()} style={{ height: scrollHeight }} headStyle={MAntdCard.headerStyle('default')}>
-                                {/* <Row>
+                            {/* <Row>
                                         <Col span={12}>
                                             {"文件名称：" + fileName}
                                         </Col>
@@ -648,45 +670,53 @@ class FirmwareFunctionView extends React.Component {
                                         </Col>
                                     </Row> 
                                     <br />*/}
-                                {isFunctionAreaVisible &&
-                                    <Row>
-                                        <Col span={7} >
-                                            <Search allowClear id='functionSearchInput' placeholder="函数搜索" onChange={this.onMethodInputChange} onSearch={this.onMethodSearch} />
-                                            <div id='functionTree' className={classes.functionTreeContainer}>
-                                                <Tree
-                                                    onSelect={this.onSelectMethod}
-                                                    onExpand={this.onFunctionExpand}
-                                                    expandedKeys={expandedFunctionKeys}
-                                                    autoExpandParent={autoFunctionExpandParent}
-                                                    treeData={loopFunctionTree(functionTreeData)}
-                                                />
-                                            </div>
-                                        </Col>
-                                        <Col span={17}>
-                                            {/* {this.state.asmCode === '' && this.state.selectedFirmwareFunctionId !== '' && <Spin style={{ marginTop: 50, marginLeft: 50 }} tip="Loading..."></Spin>} */}
-                                            {this.state.asmCode !== ''
-                                                && <Card title="汇编代码" headStyle={MAntdCard.headerStyle('info-2')}>
-                                                    <CodeMirror ref="editor" value={this.state.asmCode} /*onChange={this.updateCode}*/ options={optionsAsm} />
-                                                </Card>
-                                            }
-                                            {this.state.vexCode !== ''
-                                                && <Card title="中间代码" headStyle={MAntdCard.headerStyle('info-2')}>
-                                                    <CodeMirror ref="editor" value={this.state.vexCode} /*onChange={this.updateCode}*/ options={optionsVex} />
-                                                </Card>
-                                            }
-                                            {this.state.vexCode !== ''
-                                                && <Card title="函数调用关系图" headStyle={MAntdCard.headerStyle('info-2')} extra={
-                                                    <div>
-                                                        <a onClick={this.getGraphInfo.bind(this)}>详细</a>
-                                                    </div>
-                                                }>
-                                                </Card>
-                                            }
-                                            <Modal visible={functionPreviewVisible} footer={null} onCancel={this.handleFunctionPreviewCancel}>
-                                                <img alt="functionPreview" style={{ width: '100%' }} src={'data:image/jpg/png/gif;base64,' + functionPreviewImage} />
-                                            </Modal>
+                            <Row>
+                                <Card title={'函数信息'} extra={this.getExtra()} style={{ height: scrollHeight }} headStyle={MAntdCard.headerStyle('default')}>
+                                    {isFunctionAreaVisible &&
+                                        <Row>
+                                            <Row gutter={10}>
+                                                {stats.map((stat) => (<Col span={this.getSpan(stat)}>
+                                                    <MStatCardNoIcon myparams={stat} />
+                                                </Col>))}
+                                            </Row>
+                                            <br />
+                                            <Col span={7} >
+                                                <Search allowClear id='functionSearchInput' placeholder="函数搜索" onChange={this.onMethodInputChange} onSearch={this.onMethodSearch} />
+                                                <div id='functionTree' className={classes.functionTreeContainer}>
+                                                    <Tree
+                                                        onSelect={this.onSelectMethod}
+                                                        onExpand={this.onFunctionExpand}
+                                                        expandedKeys={expandedFunctionKeys}
+                                                        autoExpandParent={autoFunctionExpandParent}
+                                                        treeData={loopFunctionTree(functionTreeData)}
+                                                    />
+                                                </div>
+                                            </Col>
+                                            <Col span={17}>
+                                                {/* {this.state.asmCode === '' && this.state.selectedFirmwareFunctionId !== '' && <Spin style={{ marginTop: 50, marginLeft: 50 }} tip="Loading..."></Spin>} */}
+                                                {this.state.asmCode !== ''
+                                                    && <Card title="汇编代码" headStyle={MAntdCard.headerStyle('info-2')}>
+                                                        <CodeMirror height={200} ref="editor" value={this.state.asmCode} /*onChange={this.updateCode}*/ options={optionsAsm} />
+                                                    </Card>
+                                                }
+                                                {this.state.vexCode !== ''
+                                                    && <Card title="中间代码" headStyle={MAntdCard.headerStyle('info-2')}>
+                                                        <CodeMirror height={400} ref="editor" value={this.state.vexCode} /*onChange={this.updateCode}*/ options={optionsVex} />
+                                                    </Card>
+                                                }
+                                                {this.state.vexCode !== ''
+                                                    && <Card title="函数调用关系图" headStyle={MAntdCard.headerStyle('info-2')} extra={
+                                                        <div>
+                                                            <a onClick={this.getGraphInfo.bind(this)}>详细</a>
+                                                        </div>
+                                                    }>
+                                                    </Card>
+                                                }
+                                                <Modal visible={functionPreviewVisible} footer={null} onCancel={this.handleFunctionPreviewCancel}>
+                                                    <img alt="functionPreview" style={{ width: '100%' }} src={'data:image/jpg/png/gif;base64,' + functionPreviewImage} />
+                                                </Modal>
 
-                                            {this.state.vexCode !== ''
+                                                {/* {this.state.vexCode !== ''
                                                 && <Card title="函数控制流程图" headStyle={MAntdCard.headerStyle('info-2')} extra={
                                                     <div>
                                                         <a onClick={this.getControlGraphInfo.bind(this)}>详细</a>
@@ -707,10 +737,11 @@ class FirmwareFunctionView extends React.Component {
                                             }
                                             <Modal visible={dependencyPreviewVisible} footer={null} onCancel={this.handleDependencyPreviewCancel}>
                                                 <img alt="dependencyPreview" style={{ width: '100%' }} src={'data:image/jpg/png/gif;base64,' + dependencyPreviewImage} />
-                                            </Modal>
-                                        </Col>
-                                    </Row>}
-                            </Card>
+                                            </Modal> */}
+                                            </Col>
+                                        </Row>}
+                                </Card>
+                            </Row>
                         </Col>
                     </Row>
                 </Skeleton>

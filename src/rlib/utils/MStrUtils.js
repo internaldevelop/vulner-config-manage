@@ -1,4 +1,4 @@
-
+import MObjUtils from './MObjUtils';
 
 class MStrUtils {
 
@@ -93,7 +93,7 @@ class MStrUtils {
      * @param {String} str 待检查的字符串对象
      */
     isEmpty(str) {
-        return (!(typeof (str) === 'string') || (str.length === 0));
+        return (!(MObjUtils.isString(str)) || (str.length === 0));
     }
 
 }

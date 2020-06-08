@@ -1,4 +1,5 @@
 import MStrUtils from './MStrUtils';
+import MObjUtils from './MObjUtils';
 class MTimeUtils {
     /**
      * 当前线程等待给定的毫秒数
@@ -28,6 +29,17 @@ class MTimeUtils {
 
         // 返回时间对象
         return tm;
+    }
+
+    /**
+     * 不能解析这种格式： 2020年11月4日
+     * @param {string} tmStr 时间字符串
+     */
+    parse(tmStr) {
+        if (!MObjUtils.isString(tmStr)) {
+            return null;
+        }
+        return new Date(Date.parse(tmStr));
     }
 
     /** 

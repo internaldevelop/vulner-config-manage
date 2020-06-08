@@ -47,20 +47,28 @@ class MObjUtils {
 
     /**
      * 比较两个对象的值（支持字符串和数字）
-     * @param {*} a 待比较的第一个对象
-     * @param {*} b 待比较的第二个对象
+     * @param {any} a 待比较的第一个对象
+     * @param {any} b 待比较的第二个对象
      */
     compare(a, b) {
-        if (typeof(aVal) === 'string') {
+        if (this.isString(a)) {
             // 字符串比较
-            return aVal.localeCompare(bVal, "zh");
-        } else if (typeof(aVal) === 'number') {
+            return a.localeCompare(b, "zh");
+        } else if (this.isNumber(a)) {
             // 数字比较
             return this.compareNumber(a, b);
         }
 
         // 不支持的对象返回 0
         return 0;
+    }
+
+    isNumber(obj) {
+        return (typeof(obj) === 'number');
+    }
+
+    isString(obj) {
+        return (typeof(obj) === 'string');
     }
 }
 
