@@ -11,6 +11,7 @@ const hostMenus = [
             { key: '/home/firmware-analyze/firmware-fetch', title: '固件收集', icon: 'download', },
             { key: '/home/firmware-analyze/package-fetch', title: '固件包抽取', icon: 'project', },
             { key: '/home/firmware-analyze/function-fetch', title: '固件函数抽取', icon: 'code',},
+            { key: '/home/firmware-analyze/component-compile', title: '组件编译', icon: 'code',},
         ]
     },
     {

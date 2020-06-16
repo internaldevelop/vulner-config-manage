@@ -1,3 +1,5 @@
+import React from 'react';
+import { inject, observer } from 'mobx-react';
 import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Input from '@material-ui/core/Input';
@@ -6,8 +8,6 @@ import Radio from '@material-ui/core/Radio';
 import RadioGroup from '@material-ui/core/RadioGroup';
 import { withStyles } from '@material-ui/core/styles';
 import { Button, Card, Col, Icon, message, Progress, Row } from 'antd';
-import { inject, observer } from 'mobx-react';
-import React from 'react';
 import { sockMsgType } from '../../global/enumeration/SockMsgType';
 import { GetWebSocketUrl } from '../../global/environment';
 import MAntdCard from '../../rlib/props/MAntdCard';
