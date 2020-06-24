@@ -31,19 +31,29 @@ class VulnerStatisticsView extends React.Component {
             <div>
                 <Skeleton loading={!userStore.isNormalUser} active avatar>
                     <Row>
-                        <Col span={12}>
+                        <Col span={11}>
                             <StatBar name='years' />
                         </Col>
-                        <Col span={12}>
+                        {/* <Col span={12}>
                             <StatBar name='platform' />
+                        </Col> */}
+                        <Col span={11} offset={1}>
+                            <StatPie name='discoverer' />
                         </Col>
                     </Row>
+                    <br />
                     <Row>
-                        <Col span={12}>
+                        {/* <Col span={12}>
                             <StatPie name='type' />
                         </Col>
                         <Col span={12} >
                             <StatPie name='verified' />
+                        </Col> */}
+                        <Col span={11}>
+                            <StatBar name='discoverer_years' />
+                        </Col>
+                        <Col span={11} offset={1}>
+                            <StatPie name='serverity' />
                         </Col>
                     </Row>
                 </Skeleton>

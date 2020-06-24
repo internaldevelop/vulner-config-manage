@@ -31,6 +31,10 @@ class MAntdCard {
 
         } else if (mode[0] === '#') {
             return {backgroundColor: mode, color: 'white'};
+
+        } else if (MStrUtils.equalNoCase(mode, 'green')) {
+            return {backgroundColor: '#DEF2DD', color: 'black'};
+            
         }
     
         // 缺省情况下的卡片头部风格设置

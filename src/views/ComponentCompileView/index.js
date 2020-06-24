@@ -1,15 +1,13 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import { inject, observer } from 'mobx-react';
 import { withStyles } from '@material-ui/core/styles';
-import FormControl from '@material-ui/core/FormControl';
-import Input from '@material-ui/core/Input';
-import InputLabel from '@material-ui/core/InputLabel';
-import { Card, Button, Col, message, Row, Skeleton, Upload } from 'antd';
+import { Table, Button, Card, Col, message, Row, Skeleton, Upload } from 'antd';
+import { inject, observer } from 'mobx-react';
+import React from 'react';
+import { columns as Column } from './Column'
 import { sockMsgType } from '../../global/enumeration/SockMsgType';
 import { GetWebSocketUrl } from '../../global/environment';
-import { generateUuidStr } from '../../utils/tools';
 import MAntdCard from '../../rlib/props/MAntdCard';
+import MAntdTable from '../../rlib/props/MAntdTable';
+import { generateUuidStr } from '../../utils/tools';
 
 
 let outerBox;
@@ -28,12 +26,12 @@ const styles = theme => ({
         fontSize: 13,
         padding: 10,
         background: 'rgba(17, 24, 50, 1)',
-        marginTop: 30,
+        //marginTop: 30,
     },
     content: {
         width: '100%',
         overFlow: 'hidden',
-        marginRight: 10,
+        //marginRight: 10,
         color: '#9bb7ef',
     },
 });
@@ -44,6 +42,7 @@ class ComponentCompileView extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            columns: Column(),
             dirPath: '',
             fileNum: '',
             loading: true,
@@ -174,7 +173,7 @@ class ComponentCompileView extends React.Component {
         if (dirName !== undefined && dirName.indexOf('/') > 0) {
             let dirPath = dirName.substring(0, dirName.indexOf('/'));
             let fileNum = files.length;
-            this.setState({dirPath, fileNum});
+            this.setState({ dirPath, fileNum });
         }
     }
 
@@ -193,12 +192,58 @@ class ComponentCompileView extends React.Component {
         //const {  } = this.state;
         const { classes } = this.props;
         const userStore = this.props.userStore;
+        const { columns } = this.state;
         let self = this;
 
         return (
             <Skeleton loading={!userStore.isNormalUser} active avatar>
-                <Card title={'组件编译'} /*extra={this.getExtra()}*/ style={{ height: '100%' }} headStyle={MAntdCard.headerStyle('default')}>
-                    <Row>
+                <Row>
+                    <Col span={12}>
+                        <Card title={'组件选择'} style={{ height: '100%', margin: 8 }} headStyle={MAntdCard.headerStyle('main')}>
+                            <Table
+                                columns={columns}
+                                //dataSource={authRecords}
+                                bordered={true}
+                                rowKey={record => record.uuid}
+                                rowClassName={this.setRowClassName}
+                                onRow={this.onRow}
+                                pagination={MAntdTable.pagination(self.handlePageChange)}
+                            />
+                            <br />{/*编译参数 */}
+                            <Row>
+                                <Col span={3} offset={6}>
+                                    <Upload
+                                        //listType="picture-card"
+                                        //className="avatar-uploader"
+                                        showUploadList={false}
+                                        //action="https://www.mocky.io/v2/5cc8019d300000980a055e76"
+                                        beforeUpload={this.beforeUpload}
+                                        onChange={this.handleChange}
+                                        directory
+                                    >
+                                        <Button size={'large'} type='primary' style={{ marginRight: 100 }}>选择目录</Button>
+                                    </Upload>
+                                </Col>
+                                <Col span={3} offset={1}>
+                                    <Button disabled={this.state.loading} size={'large'} type='primary' onClick={this.updateCompileContent}>执行编译</Button>
+                                </Col>
+                                <Col span={3} offset={1}>
+                                    <Button disabled={this.state.loading} size={'large'} type='primary' onClick={this.updateCompileContent}>查看结果</Button>
+                                </Col>
+                            </Row>
+                        </Card>
+                    </Col>
+                    <Col span={12}>
+                        <Card title={'编译信息'} style={{ height: '100%', margin: 8 }} headStyle={MAntdCard.headerStyle('info-2')}>
+                            <div className={classes.macro} ref={(c) => { this.outerContainer = c }}>
+                                <div id='consolecontainer' ref={(c) => { this.consolecontainer = c }} >
+                                    <p className={classes.content}>{this.state.content}</p>
+                                </div >
+                            </div>
+                        </Card>
+                    </Col>
+                </Row>
+                {/* <Row>
                         <Col span={10}>
                             <FormControl disabled margin="normal" fullWidth>
                                 <InputLabel>组件源文件目录：</InputLabel>
@@ -238,8 +283,7 @@ class ComponentCompileView extends React.Component {
                         <div id='consolecontainer' ref={(c) => { this.consolecontainer = c }} >
                             <p className={classes.content}>{this.state.content}</p>
                         </div >
-                    </div>
-                </Card>
+                    </div> */}
             </Skeleton>
         );
     }

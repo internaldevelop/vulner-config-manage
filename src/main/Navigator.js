@@ -20,7 +20,7 @@ const hostMenus = [
         key: '/home/vulner-manage',
         subs: [
             { key: '/home/vulner-manage/info', title: '漏洞库信息管理', icon: 'exception', },
-            { key: '/home/vulner-stat', title: '漏洞利用库统计', icon: 'line-chart', },
+            { key: '/home/vulner-stat', title: '工控漏洞统计', icon: 'line-chart', },
         ]
     },
     {

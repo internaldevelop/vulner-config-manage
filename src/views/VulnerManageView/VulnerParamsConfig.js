@@ -6,6 +6,10 @@ import { observer, inject } from 'mobx-react'
 import Draggable from '../../components/window/Draggable'
 import { Modal, Row, Col, message, Icon, Button, Typography } from 'antd';
 import TextField from '@material-ui/core/TextField';
+import Select from '@material-ui/core/Select';
+import FormControl from '@material-ui/core/FormControl';
+import MenuItem from '@material-ui/core/MenuItem';
+import InputLabel from '@material-ui/core/InputLabel';
 import { isContainSpecialCharacter } from '../../utils/ObjUtils'
 
 import RestReq from '../../utils/RestReq';
@@ -23,7 +27,7 @@ const styles = theme => ({
         alignItems: 'center',
     },
     formControl: {
-        minWidth: 200,
+        minWidth: 340,
     },
     iconButton: {
         margin: 0,
@@ -67,86 +71,60 @@ class VulnerParamsConfig extends React.Component {
             successInfo = "操作成功";
         }
 
-        if (data.code === errorCode.ERROR_OK) {
+        if (data.code === 'ERROR_OK') {
             message.info(successInfo);
-            this.props.vulnerStore.setParam("edb_id", data.payload.edb_id);
-            this.props.vulnerStore.setParam("date_published", data.payload.date_published);
             // 调用父组件传入的回调函数，第一个参数 true 表示本组件的参数设置已确认，且记录已在后台创建或更新
             actionCB(true, {});
         } else {
             message.error(eng2chn(data.error));
-            //TODO, 测试中为了增加错误日志功能
-            // let title = '新建漏洞';
-            // let content = '新建漏洞失败，' + eng2chn(data.error);
-            // if (this.props.vulnerStore.vulnerAction === actionType.ACTION_EDIT) {
-            //     title = '更新漏洞';
-            //     content = '更新漏洞失败，' + eng2chn(data.error);
-            // }
-            // HttpRequest.asyncPost(this.addSystemLogsCB, '/system-logs/add', {
-            //     title, content, type: 3,//SYS_ERROR = 3
-            // },
-            // false);
-            // 后台创建记录失败，则用参数 false 通知父组件不更新页面
             actionCB(false, {});
         }
     }
 
-    addSystemLogsCB = (data) => {
-
-    }
-
     handleOk = (e) => {
-        const { vul_id, edb_id, title, author, type, platform, customized} = this.props.vulnerStore.vulnerItem;
+        const { vul_id, edb_id, title, serverity, type, products, discovererName, customized } = this.props.vulnerStore.vulnerItem;
         const { userUuid } = this.props.userStore.loginUser;
         if (!this.checkData()) {
             return false;
         }
         if (this.props.vulnerStore.vulnerAction === actionType.ACTION_NEW) {
-            RestReq.asyncGet(this.requestVulnerCB('new'), '/fw-bend-server/vuldb/add_vul',
-                {
-                    title, author, type, platform, customized,
-                },
-            );
+            let result = { edb_id: edb_id, title, serverity, type, products, discovererName };
+            RestReq.asyncPost(this.requestVulnerCB('new'), '/fw-bend-server/vuldb/add_vul', { params: JSON.stringify(result) });
         } else if (this.props.vulnerStore.vulnerAction === actionType.ACTION_EDIT) {
-            let result = {id: vul_id, edb_id: edb_id};//result result.toString() JSON.stringify(result);三种都不行 可能是get请求 会转义特殊字符 需要用post
-            RestReq.asyncGet(this.requestVulnerCB('update'), '/fw-bend-server/vuldb/modify_vul', {params: result});
-            // RestReq.asyncGet(this.requestVulnerCB('update'), '/fw-bend-server/vuldb/modify_vul',
-            //     {
-            //         id: vul_id, edb_id, /*title, author, type, platform, customized,*/
-            //     }
-            // );
+            let result = { id: vul_id, edb_id: edb_id, title, serverity, type, products, discovererName };//result result.toString() JSON.stringify(result);三种都不行 可能是get请求 会转义特殊字符 需要用post
+            RestReq.asyncPost(this.requestVulnerCB('update'), '/fw-bend-server/vuldb/modify_vul', { params: JSON.stringify(result) });
         }
     }
 
     checkData() {
         let title = document.getElementById('title').value;
-        let author = document.getElementById('author').value;
-        let platform = document.getElementById('platform').value;
+        let discovererName = document.getElementById('discovererName').value;
+        let products = document.getElementById('products').value;
         let type = document.getElementById('type').value;
 
         if (title === null || title === '') {
             message.info('漏洞名称不能为空，请重新输入');
             document.getElementById('title').value = '';
             return false;
-        } else if (title.length > 20) {
-            message.info('漏洞名称长度不能超过20，请重新输入');
-            document.getElementById('title').value = '';
-            return false;
+        // } else if (title.length > 20) {
+        //     message.info('漏洞名称长度不能超过20，请重新输入');
+        //     document.getElementById('title').value = '';
+        //     return false;
         } else if (isContainSpecialCharacter(title)) {
             message.info('漏洞名称含有特殊字符，请重新输入');
             document.getElementById('title').value = '';
             return false;
-        } else if (author === null || author === ' ' || author === '') {
-            message.info('发布者不能为空，请重新输入');
-            document.getElementById('author').value = '';
+        } else if (discovererName === null || discovererName === ' ' || discovererName === '') {
+            message.info('厂商不能为空，请重新输入');
+            document.getElementById('discovererName').value = '';
             return false;
-        } else if (author.length > 20) {
-            message.info('发布者名称长度不能超过20，请重新输入');
-            document.getElementById('author').value = '';
-            return false;
-        } else if (isContainSpecialCharacter(author)) {
-            message.info('发布者名称含有特殊字符，请重新输入');
-            document.getElementById('author').value = '';
+        // } else if (discovererName.length > 20) {
+        //     message.info('厂商名称长度不能超过20，请重新输入');
+        //     document.getElementById('discovererName').value = '';
+        //     return false;
+        } else if (isContainSpecialCharacter(discovererName)) {
+            message.info('厂商名称含有特殊字符，请重新输入');
+            document.getElementById('discovererName').value = '';
             return false;
         } else if (type === null || type === '' || type === ' ') {
             message.info('类型不能为空，请重新输入');
@@ -160,17 +138,17 @@ class VulnerParamsConfig extends React.Component {
             message.info('类型含有特殊字符，请重新输入');
             document.getElementById('type').value = '';
             return false;
-        } else if (platform === null || platform === '' || platform === ' ') {
-            message.info('平台不能为空，请重新输入');
-            document.getElementById('platform').value = '';
+        } else if (products === null || products === '' || products === ' ') {
+            message.info('产品不能为空，请重新输入');
+            document.getElementById('products').value = '';
             return false;
-        } else if (platform.length > 20) {
-            message.info('平台名称长度不能超过20，请重新输入');
-            document.getElementById('platform').value = '';
-            return false;
-        } else if (isContainSpecialCharacter(platform)) {
-            message.info('平台名称含有特殊字符，请重新输入');
-            document.getElementById('platform').value = '';
+        // } else if (products.length > 20) {
+        //     message.info('产品长度不能超过20，请重新输入');
+        //     document.getElementById('products').value = '';
+        //     return false;
+        } else if (isContainSpecialCharacter(products)) {
+            message.info('产品含有特殊字符，请重新输入');
+            document.getElementById('products').value = '';
             return false;
         }
         return true;
@@ -181,22 +159,31 @@ class VulnerParamsConfig extends React.Component {
         this.props.vulnerStore.setParam("title", event.target.value);
     }
 
-    handleAuthorChange = (event) => {
-        this.props.vulnerStore.setParam("author", event.target.value);
+    handleProductsChange = (event) => {
+        this.props.vulnerStore.setParam("products", event.target.value);
     }
 
-    handlePlatformChange = (event) => {
-        this.props.vulnerStore.setParam("platform", event.target.value);
+    handleDiscovererNameChange = (event) => {
+        this.props.vulnerStore.setParam("discovererName", event.target.value);
     }
 
     handleTypeChange = (event) => {
         this.props.vulnerStore.setParam("type", event.target.value);
     }
 
+    handleEdbIDChange = (event) => {
+        this.props.vulnerStore.setParam("edb_id", event.target.value);
+    }
+
+    handleServerityChange = (event) => {
+        this.props.vulnerStore.setParam("serverity", event.target.value);
+    }
+
     render() {
-        const { edb_id, title, author, type, platform, } = this.props.vulnerStore.vulnerItem;
+        const { vul_id, edb_id, title, serverity, type, products, discovererName } = this.props.vulnerStore.vulnerItem;
         const { vulnerNameExist } = this.state;
         const modalTitle = <Draggable title={this.props.vulnerStore.vulnerProcName} />;
+        const { classes } = this.props;
         return (
             <Modal
                 title={modalTitle}
@@ -215,20 +202,43 @@ class VulnerParamsConfig extends React.Component {
                         <Text styles={{ color: '#4caf50' }}><br />{vulnerNamealert}</Text>} */}
                     <Row>
                         <Col span={11}>
-                            <TextField required fullWidth id="author" label="发布者" defaultValue={author}
-                                variant="outlined" margin="normal" onChange={this.handleAuthorChange}
+                            <TextField required fullWidth id="products" label="产品类型" defaultValue={products}
+                                variant="outlined" margin="normal" onChange={this.handleProductsChange}
                             />
                         </Col>
                         <Col span={11} offset={2}>
-                            <TextField required fullWidth id="platform" label="平台" defaultValue={platform}
-                                variant="outlined" margin="normal" onChange={this.handlePlatformChange}
+                            <TextField required fullWidth id="discovererName" label="厂商" defaultValue={discovererName}
+                                variant="outlined" margin="normal" onChange={this.handleDiscovererNameChange}
                             />
                         </Col>
                     </Row>
                     <Row>
-                        <TextField required fullWidth id="type" label="类型" defaultValue={type}
-                            variant="outlined" margin="normal" onChange={this.handleTypeChange}
-                        />
+                        <Col span={11}>
+                            <TextField required fullWidth id="type" label="类型" defaultValue={type}
+                                variant="outlined" margin="normal" onChange={this.handleTypeChange}
+                            />
+                        </Col>
+                        <Col span={11} offset={2}>
+                            <TextField required fullWidth id="edb_id" label="漏洞编号" defaultValue={edb_id}
+                                variant="outlined" margin="normal" onChange={this.handleEdbIDChange}
+                            />
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col span={11}>
+                            <FormControl variant="outlined"  margin="normal" className={classes.formControl}>
+                                <InputLabel id="select-outlined-label">危害等级</InputLabel>
+                                <Select
+                                    value={serverity}
+                                    onChange={this.handleServerityChange}
+                                    label="serverity"
+                                >
+                                    <MenuItem value="高">高</MenuItem>
+                                    <MenuItem value="中">中</MenuItem>
+                                    <MenuItem value="低">低</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Col>
                     </Row>
                 </form>
             </Modal>
