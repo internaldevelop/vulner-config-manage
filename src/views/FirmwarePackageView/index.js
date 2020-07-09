@@ -44,7 +44,7 @@ const styles = theme => ({
     },
     fileGutterBox: {
         padding: 8,
-        height: 100,
+        //height: 100,
         //background: '#E6E6E6',
         background: '#DDEBFF',
         //color: '#DC143C',
@@ -218,29 +218,6 @@ class FirmwarePackageView extends React.Component {
                                 <MStatCardNoIcon myparams={stat} />
                             </Col>))}
                         </Row>
-
-                        {/* <Row>
-                            <Col span={6}>
-                                {"固件包数量：" + packTotal}
-                            </Col>
-                            <Col span={6}>
-                                {"镜像文件总数：" + mirrorFileTotal}
-                            </Col>
-                            <Col span={6}>
-                                {"任务执行情况：" + '待定'}
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col span={6}>
-                                {"可执行文件总数：" + exeFileTotal}
-                            </Col>
-                            <Col span={6}>
-                                {"文件系统镜像总数：" + fileMirrorTotal}
-                            </Col>
-                            <Col span={6}>
-                                {"系统镜像总数：" + systemMirrorTotal}
-                            </Col>
-                        </Row> */}
                     </Card>
                     <Card title={'固件包列表'} style={{ height: '100%' }} headStyle={MAntdCard.headerStyle('default')}>
                         <Row gutter={[16, 24]}>
@@ -257,11 +234,34 @@ class FirmwarePackageView extends React.Component {
                                     </Row>
                                     <Link to={{ pathname: '/home/firmware-analyze/function-fetch', state: { pack_id: item.pack_id } }} align="center">
                                         <Row>
-                                            <Col className={classes.fileGutterBox} align="center">
-                                                <p>{"XXX架构"}</p>
-                                                <p>{"可执行文件" + item.exeFileNum + "个"}</p>
-                                                <p>{"系统镜像文件" + item.systemMirrorNum + "个"}</p>
-                                                {/* <p>{"文件系统镜像文件" + item.fileMirrorNum + "个"}</p> */}
+                                            <Col className={classes.fileGutterBox} align="left">
+                                                <Row>
+                                                    <Col span={12}>
+                                                        {"组件数 " + 3}
+                                                    </Col>
+                                                    <Col span={12}>
+                                                        {"可执行文件数 " + item.exeFileNum}
+                                                    </Col>
+                                                </Row>
+                                                <Row>
+                                                    <Col span={12}>
+                                                        {"ARM 架构"}
+                                                    </Col>
+                                                    <Col span={12}>
+                                                        {"系统镜像文件数 " + item.systemMirrorNum}
+                                                    </Col>
+                                                </Row>
+                                                <Row>
+                                                    <Col span={12}>
+                                                        {"YAFFS 文件系统"}
+                                                    </Col>
+                                                    <Col span={12}>
+                                                        {"文件系统镜像数 " + item.fileMirrorNum}
+                                                    </Col>
+                                                    {/* <Col span={12}>
+                                                        {"固件分析已完成 " }
+                                                    </Col> */}
+                                                </Row>
                                             </Col>
                                         </Row>
                                     </Link>
@@ -302,7 +302,7 @@ class FirmwarePackageView extends React.Component {
                                         title={item.task_name}/*固件名称 + 任务名称*/
                                         description={item.start_time}
                                     />
-                                    <div>{item.percentage}</div>
+                                    <div>{item.percentage+ '%'}</div>
                                 </List.Item>}
                         />
                     </Drawer>

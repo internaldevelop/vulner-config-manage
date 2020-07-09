@@ -22,6 +22,8 @@ import DataRestoreView from '../views/DataRestoreView';
 import LogCustomView from '../views/SystemLogsView/LogCustomView';
 import LogDownloadView from '../views/SystemLogsView/LogDownloadView';
 import ComponentCompileView from '../views/ComponentCompileView';
+import ComponentConnectView from '../views/ComponentConnectView';
+import FeatureExtrationView from '../views/FeatureExtrationView';
 
 @withRouter
 class ContentMain extends React.Component {
@@ -49,6 +51,8 @@ class ContentMain extends React.Component {
         <PrivateRoute exact path='/home/firmware-analyze/package-fetch' component={FirmwarePackageView} />
         <PrivateRoute exact path='/home/firmware-analyze/function-fetch' component={FirmwareFunctionView} />
         <PrivateRoute exact path='/home/firmware-analyze/component-compile' component={ComponentCompileView} />
+        <PrivateRoute exact path='/home/firmware-analyze/component-connect' component={ComponentConnectView} />
+        <PrivateRoute exact path='/home/firmware-analyze/feature-extration' component={FeatureExtrationView} />
 
         <PrivateRoute exact path='/home/certfile-manage/generate' component={CertFileGenerate} />
         <PrivateRoute exact path='/home/certfile-manage/import' component={CertFileImport} />

@@ -123,6 +123,7 @@ class VulnerManageInfoView extends React.Component {
         item.vul_id = data.id;
         item.serverity = data.serverity;
         item.discovererName = data.discovererName;
+        item.fw_version = data.version;
         let prodName = '';
         for(let p of data.products) {
             prodName += p.product + ' ';
@@ -178,10 +179,11 @@ class VulnerManageInfoView extends React.Component {
     }
 
     deleteVulnerCB = (dataIndex) => (data) => {
-        const { vulners } = this.state;
         // rowIndex 为行索引，第二个参数 1 为一次去除几行
-        vulners.splice(dataIndex, 1);
-        this.setState({ vulners });
+        // const { vulners } = this.state;
+        // vulners.splice(dataIndex, 1);
+        // this.setState({ vulners });
+        this.getVulnerResults(this.state.currentPage, this.state.pageSize, this.state.queryType);
     }
 
     /**
@@ -245,11 +247,12 @@ class VulnerManageInfoView extends React.Component {
     handleCloseConfig = (isOk, policy) => {
         const vulnerStore = this.props.vulnerStore;
         if (isOk) {
-            if (vulnerStore.vulnerAction === actionType.ACTION_NEW) {
-                this.addVulnerData();
-            } else if (vulnerStore.vulnerAction === actionType.ACTION_EDIT) {
-                this.editVulnerParams();
-            }
+            // if (vulnerStore.vulnerAction === actionType.ACTION_NEW) {
+            //     this.addVulnerData();
+            // } else if (vulnerStore.vulnerAction === actionType.ACTION_EDIT) {
+            //     this.editVulnerParams();
+            // }
+            this.getVulnerResults(this.state.currentPage, this.state.pageSize, this.state.queryType);
         }
         this.setState({ showConfig: false });
     }

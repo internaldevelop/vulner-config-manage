@@ -20,6 +20,12 @@ const styles = theme => ({
         margin: 0,
         marginLeft: 10,
     },
+    actionButton: {
+        marginLeft: 5,
+        marginRight: 5,
+        marginBottom: 0,
+        marginTop: 0,
+    },
 });
 
 const DEFAULT_PAGE_SIZE = 10;

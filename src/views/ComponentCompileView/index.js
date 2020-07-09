@@ -49,10 +49,10 @@ const styles = theme => ({
 });
 
 let list = [
-    { index: 1, title: '水电终端-41', type: 'v1.1', fileNum: 130, compile_result: 1 },
-    { index: 2, title: '水电终端-42', type: 'v1.3', fileNum: 120, compile_result: 2 },
-    { index: 3, title: '水电终端-43', type: 'v1.11', fileNum: 110, compile_result: 3 },
-    { index: 4, title: '水电终端-44', type: 'v12.112', fileNum: 30, compile_result: 0 },];
+    { index: 1, title: '水电终端-41', version: 'v1.1', fileNum: 130, compile_result: 1 },
+    { index: 2, title: '水电终端-42', version: 'v1.3', fileNum: 120, compile_result: 2 },
+    { index: 3, title: '水电终端-43', version: 'v1.11', fileNum: 110, compile_result: 3 },
+    { index: 4, title: '水电终端-44', version: 'v12.112', fileNum: 30, compile_result: 0 },];
 
 @inject('userStore')
 @observer
@@ -278,7 +278,7 @@ class ComponentCompileView extends React.Component {
             <Skeleton loading={!userStore.isNormalUser} active avatar>
                 <Row>
                     <Col span={12}>
-                        <Card title={'组件选择'} style={{ height: '100%', margin: 8 }} headStyle={MAntdCard.headerStyle('main')}>
+                        <Card title={'组件源码选择'} style={{ height: '100%', margin: 8 }} headStyle={MAntdCard.headerStyle('main')}>
                             <Table
                                 columns={columns}
                                 dataSource={componetsList}
@@ -293,8 +293,8 @@ class ComponentCompileView extends React.Component {
                                 <Col span={3}>
                                     <Typography variant="subtitle1" style={{ marginTop: 5 }}>编译参数：</Typography>
                                 </Col>
-                                <Col span={8}>
-                                    <Select size='large' placeholder='选择编译参数' style={{ width: 260 }} onChange={this.handlePropChange.bind(this)}>
+                                <Col span={6}>
+                                    <Select size='large' placeholder='选择编译参数' style={{ width: 200 }} onChange={this.handlePropChange.bind(this)}>
                                         <Option value="ARM">ARM</Option>
                                         <Option value="X86">X86</Option>
                                         <Option value="MTPS">MTPS</Option>
@@ -302,10 +302,13 @@ class ComponentCompileView extends React.Component {
                                     </Select>
                                 </Col>
                                 <Col span={3} offset={1}>
-                                    <Button size={'large'} type='primary' onClick={this.updateCompileContent}>执行编译</Button>
+                                    <Button size={'large'} type='primary' onClick={this.updateCompileContent}>执行组件编译</Button>
                                 </Col>
-                                <Col span={3} offset={1}>
-                                    <Button disabled={!this.isSelectedSuccessItem()} size={'large'} type='primary' onClick={this.handleSelectCompileResult}>查看结果</Button>
+                                <Col span={3} offset={2}>
+                                    <Button size={'large'} type='primary' onClick={this.updateCompileContent}>查看源码文件</Button>
+                                </Col>
+                                <Col span={3} offset={2}>
+                                    <Button disabled={!this.isSelectedSuccessItem()} size={'large'} type='primary' onClick={this.handleSelectCompileResult}>查看编译结果</Button>
                                 </Col>
                             </Row>
                         </Card>

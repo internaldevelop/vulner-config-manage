@@ -40,8 +40,6 @@ const styles = theme => ({
     },
 });
 
-let vulnerNamealert = '';
-
 @inject('vulnerStore')
 @inject('userStore')
 @observer
@@ -49,7 +47,6 @@ class VulnerParamsConfig extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            vulnerNameExist: false,
         }
     }
 
@@ -82,16 +79,16 @@ class VulnerParamsConfig extends React.Component {
     }
 
     handleOk = (e) => {
-        const { vul_id, edb_id, title, serverity, type, products, discovererName, customized } = this.props.vulnerStore.vulnerItem;
+        const { vul_id, edb_id, title, serverity, type, products, discovererName, fw_version } = this.props.vulnerStore.vulnerItem;
         const { userUuid } = this.props.userStore.loginUser;
         if (!this.checkData()) {
             return false;
         }
         if (this.props.vulnerStore.vulnerAction === actionType.ACTION_NEW) {
-            let result = { edb_id: edb_id, title, serverity, type, products, discovererName };
+            let result = { number: edb_id, title, serverity, isEvent: type, products, discovererName, version: fw_version };
             RestReq.asyncPost(this.requestVulnerCB('new'), '/fw-bend-server/vuldb/add_vul', { params: JSON.stringify(result) });
         } else if (this.props.vulnerStore.vulnerAction === actionType.ACTION_EDIT) {
-            let result = { id: vul_id, edb_id: edb_id, title, serverity, type, products, discovererName };//result result.toString() JSON.stringify(result);三种都不行 可能是get请求 会转义特殊字符 需要用post
+            let result = { id: vul_id, number: edb_id, title, serverity, isEvent: type, products, discovererName, version: fw_version };//result result.toString() JSON.stringify(result);三种都不行 可能是get请求 会转义特殊字符 需要用post
             RestReq.asyncPost(this.requestVulnerCB('update'), '/fw-bend-server/vuldb/modify_vul', { params: JSON.stringify(result) });
         }
     }
@@ -101,31 +98,32 @@ class VulnerParamsConfig extends React.Component {
         let discovererName = document.getElementById('discovererName').value;
         let products = document.getElementById('products').value;
         let type = document.getElementById('type').value;
+        //let version = document.getElementById('fw_version').value;
 
         if (title === null || title === '') {
             message.info('漏洞名称不能为空，请重新输入');
             document.getElementById('title').value = '';
             return false;
-        // } else if (title.length > 20) {
-        //     message.info('漏洞名称长度不能超过20，请重新输入');
-        //     document.getElementById('title').value = '';
-        //     return false;
-        } else if (isContainSpecialCharacter(title)) {
-            message.info('漏洞名称含有特殊字符，请重新输入');
-            document.getElementById('title').value = '';
-            return false;
+            // } else if (title.length > 20) {
+            //     message.info('漏洞名称长度不能超过20，请重新输入');
+            //     document.getElementById('title').value = '';
+            //     return false;
+            // } else if (isContainSpecialCharacter(title)) {
+            //     message.info('漏洞名称含有特殊字符，请重新输入');
+            //     document.getElementById('title').value = '';
+            //     return false;
         } else if (discovererName === null || discovererName === ' ' || discovererName === '') {
             message.info('厂商不能为空，请重新输入');
             document.getElementById('discovererName').value = '';
             return false;
-        // } else if (discovererName.length > 20) {
-        //     message.info('厂商名称长度不能超过20，请重新输入');
-        //     document.getElementById('discovererName').value = '';
-        //     return false;
-        } else if (isContainSpecialCharacter(discovererName)) {
-            message.info('厂商名称含有特殊字符，请重新输入');
-            document.getElementById('discovererName').value = '';
-            return false;
+            // } else if (discovererName.length > 20) {
+            //     message.info('厂商名称长度不能超过20，请重新输入');
+            //     document.getElementById('discovererName').value = '';
+            //     return false;
+            // } else if (isContainSpecialCharacter(discovererName)) {
+            //     message.info('厂商名称含有特殊字符，请重新输入');
+            //     document.getElementById('discovererName').value = '';
+            //     return false;
         } else if (type === null || type === '' || type === ' ') {
             message.info('类型不能为空，请重新输入');
             document.getElementById('type').value = '';
@@ -134,22 +132,22 @@ class VulnerParamsConfig extends React.Component {
             message.info('类型长度不能超过20，请重新输入');
             document.getElementById('type').value = '';
             return false;
-        } else if (isContainSpecialCharacter(type)) {
-            message.info('类型含有特殊字符，请重新输入');
-            document.getElementById('type').value = '';
-            return false;
+            // } else if (isContainSpecialCharacter(type)) {
+            //     message.info('类型含有特殊字符，请重新输入');
+            //     document.getElementById('type').value = '';
+            //     return false;
         } else if (products === null || products === '' || products === ' ') {
             message.info('产品不能为空，请重新输入');
             document.getElementById('products').value = '';
             return false;
-        // } else if (products.length > 20) {
-        //     message.info('产品长度不能超过20，请重新输入');
-        //     document.getElementById('products').value = '';
-        //     return false;
-        } else if (isContainSpecialCharacter(products)) {
-            message.info('产品含有特殊字符，请重新输入');
-            document.getElementById('products').value = '';
-            return false;
+            // } else if (products.length > 20) {
+            //     message.info('产品长度不能超过20，请重新输入');
+            //     document.getElementById('products').value = '';
+            //     return false;
+            // } else if (isContainSpecialCharacter(products)) {
+            //     message.info('产品含有特殊字符，请重新输入');
+            //     document.getElementById('products').value = '';
+            //     return false;
         }
         return true;
     }
@@ -179,9 +177,12 @@ class VulnerParamsConfig extends React.Component {
         this.props.vulnerStore.setParam("serverity", event.target.value);
     }
 
+    handleVersionChange = (event) => {
+        this.props.vulnerStore.setParam("version", event.target.value);
+    }
+
     render() {
-        const { vul_id, edb_id, title, serverity, type, products, discovererName } = this.props.vulnerStore.vulnerItem;
-        const { vulnerNameExist } = this.state;
+        const { vul_id, edb_id, title, serverity, type, products, discovererName, version } = this.props.vulnerStore.vulnerItem;
         const modalTitle = <Draggable title={this.props.vulnerStore.vulnerProcName} />;
         const { classes } = this.props;
         return (
@@ -198,10 +199,8 @@ class VulnerParamsConfig extends React.Component {
                     <TextField required fullWidth autoFocus id="title" label="漏洞名称" defaultValue={title}
                         variant="outlined" margin="normal" onChange={this.handleVulnerTitleChange}
                     />
-                    {/* { vulnerNameExist ? <Text type="danger"><br />{vulnerNamealert}</Text> :
-                        <Text styles={{ color: '#4caf50' }}><br />{vulnerNamealert}</Text>} */}
                     <Row>
-                        <Col span={11}>
+                        <Col span={11}>{/*"products":"openssl:1.0.0 1.0.2,chanpin:2.0" */}
                             <TextField required fullWidth id="products" label="产品类型" defaultValue={products}
                                 variant="outlined" margin="normal" onChange={this.handleProductsChange}
                             />
@@ -226,7 +225,7 @@ class VulnerParamsConfig extends React.Component {
                     </Row>
                     <Row>
                         <Col span={11}>
-                            <FormControl variant="outlined"  margin="normal" className={classes.formControl}>
+                            <FormControl variant="outlined" margin="normal" className={classes.formControl}>
                                 <InputLabel id="select-outlined-label">危害等级</InputLabel>
                                 <Select
                                     value={serverity}
@@ -238,6 +237,11 @@ class VulnerParamsConfig extends React.Component {
                                     <MenuItem value="低">低</MenuItem>
                                 </Select>
                             </FormControl>
+                        </Col>
+                        <Col span={11} offset={2}>
+                            <TextField required fullWidth id="version" label="固件版本" defaultValue={version}
+                                variant="outlined" margin="normal" onChange={this.handleVersionChange}
+                            />
                         </Col>
                     </Row>
                 </form>
