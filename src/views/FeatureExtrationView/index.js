@@ -2,11 +2,10 @@ import React from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import { Card, Button, Input, Icon, Col, Row, Select, Skeleton, Table } from 'antd';
 import { inject, observer } from 'mobx-react';
-// import Typography from '@material-ui/core/Typography';
-import Typography from '../../modules/components/Typography';
 import MAntdCard from '../../rlib/props/MAntdCard';
 import MAntdTable from '../../rlib/props/MAntdTable';
 import { columns as Column } from './Column';
+import Typography from '../../modules/components/Typography';
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -39,6 +38,12 @@ let list = [
     { index: 3, title: '水电终端-43', version: 'v1.11', fwName: 'testSquashfsmini.zip', vulNum: 110, vulName: 'Cisco Catalyst交换机远程拒绝服务攻击漏洞' },
     { index: 4, title: '水电终端-44', version: 'v12.112', fwName: 'testSquashfsmini.zip', vulNum: 30, vulName: 'Cisco Catalyst交换机远程拒绝服务攻击漏洞' },];
 
+let fList = [
+    { index: 1, key: '水电终端-41', number: 130, },
+    { index: 2, key: '水电终端-42', number: 120, },
+    { index: 3, key: '水电终端-43', number: 110, },
+    { index: 4, key: '水电终端-44', number: 30, },];
+
 @inject('userStore')
 @observer
 class FeatureExtrationView extends React.Component {
@@ -52,19 +57,13 @@ class FeatureExtrationView extends React.Component {
             showConfig: false,
             columns: Column(),
             inputValue: '',
+            featuresList: fList,
         }
         //this.getAllComponets();
     }
 
     getAllComponets = () => {
         this.setState({ componetsList: list });
-    }
-
-    handleConnect = (rowIndex) => (event) => {
-        // 从行索引转换成实际的数据索引
-        let dataIndex = this.transferDataIndex(rowIndex);
-        // 保存待编辑的数据索引，并打开任务数据操作窗口
-        this.setState({ recordChangeID: dataIndex, showConfig: true });
     }
 
     transferDataIndex(rowIndex) {
@@ -103,21 +102,10 @@ class FeatureExtrationView extends React.Component {
         //
     };
 
-    handleAutoConnect = (event) => {
-        //
-    };
-
-    handleCloseConfig = (isOk) => {
-        this.setState({ showConfig: false });
-        if (isOk) {
-            //重新获取手动关联后的数据
-        }
-    }
-
     render() {
         const { classes } = this.props;
         const userStore = this.props.userStore;
-        const { columns, componetsList, showConfig } = this.state;
+        const { columns, componetsList, featuresList, showConfig } = this.state;
         let self = this;
 
         return (
@@ -136,17 +124,29 @@ class FeatureExtrationView extends React.Component {
                             />
                         </Card>
                         <Row style={{ margin: 8 }}>
-                            <Col span={12} align="left">
+                            <Col span={8} align="left">
                                 <Input className={classes.antInput} size="large" allowClear onChange={this.handleInputValue.bind(this)} placeholder="敏感关键字" />
+                            </Col>
+                            <Col span={4} align="left">
                                 <Button className={classes.iconButton} type="primary" size="large" onClick={this.getSearch.bind(this)} ><Icon type="file-search" />查询</Button>
                             </Col>
                         </Row>
                     </Col>
                     <Col span={12}>
                         <Card title={'特征信息'} style={{ height: '100%', margin: 8 }} headStyle={MAntdCard.headerStyle('info-2')}>
-                            <div>
-
-                            </div>
+                            <Row>
+                                <Col span={12}><Typography variant="subtitle2" style={{ color: 'green'}}>敏感关键字</Typography></Col>
+                                <Col span={12}><Typography variant="subtitle2" style={{ color: 'green'}}>出现频次</Typography></Col>
+                            </Row>
+                            {featuresList.map((feature) => (
+                                <Row>
+                                    <Col span={12}>
+                                        {feature.key}
+                                    </Col>
+                                    <Col span={12}>
+                                        {feature.number}
+                                    </Col>
+                                </Row>))}
                         </Card>
                     </Col>
                 </Row>

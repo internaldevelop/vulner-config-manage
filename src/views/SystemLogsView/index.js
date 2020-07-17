@@ -37,6 +37,7 @@ class SystemLogsView extends React.Component {
         super(props);
         this.state = {
             columns: [],
+            logFieldList: [],
             logs: [],
             scrollWidth: 1500,        // 表格的 scrollWidth
             scrollHeight: 1300,      // 表格的 scrollHeight
@@ -48,7 +49,19 @@ class SystemLogsView extends React.Component {
             inputFileNameVisible: false,
             inputFileName: this.getDefaultFileName(),
         }
+        this.getLogFields();
+    }
+
+    getLogFields = () => {
+        RestReq.asyncGet(this.getLogFieldsCB, '/system-log/sys_log/get-log-info-config');
+    }
+
+    getLogFieldsCB = (data) => {
+        if (data.code !== 'ERROR_OK' || data.payload === undefined)
+            return;
+
         this.querySystemLogs(this.state.currentPage, this.state.pageSize);
+        this.setState({ logFieldList: data.payload });
     }
 
     /** 初始化操作列，定义渲染效果 */
@@ -121,6 +134,12 @@ class SystemLogsView extends React.Component {
     }
 
     querySystemLogs = (targetPage, pageSize) => {
+        if (targetPage === undefined) {
+            targetPage = 1;
+        } 
+        if (pageSize === undefined) {
+            pageSize = DEFAULT_PAGE_SIZE;
+        }
         let startSet = (targetPage - 1) * pageSize + 1;
         return RestReq.asyncGet(this.querySystemLogsCB, '/system-log/sys_log/search_by_filter', { offset: startSet, count: pageSize }, { token: false });
     }
@@ -180,82 +199,132 @@ class SystemLogsView extends React.Component {
         return values.map(item => { return { text: item, value: item }; });
     }
 
-    createTableColums() {
-        // TODO get table colums from the server
-        let colums = [{ title: '序号', dataIndex: 'index', key: 'key' }, { title: '级别', dataIndex: 'level' }, { title: '类型', dataIndex: 'type' },];
-        let tableColumns = [];
-        let columItem;
-        for (let item of colums) {
-            columItem = DeepClone(item);
-            columItem.width = 80;
-            tableColumns.push(columItem);
-        }
-        columItem = { title: '', width: 150, render: () => (<span></span>) };
-        tableColumns.push(columItem);
-        this.setState({ columns: tableColumns });
-    }
-
     getTableColumns = () => {
         const ratio = 1;
-        const { logs } = this.state;
-        const constantTableColumns = [
-            {
-                title: '序号', dataIndex: 'index', key: 'key', width: 80,
-            },
-            {
-                title: '级别', dataIndex: 'level', width: 80,
-                // 添加过滤器用于审计
-                filters: this.getLevelColumnFilters(logs, "type"),
-                filterMultiple: true,
-                onFilter: (value, record) => this.getLogLevelMeaning(record.type).indexOf(value) === 0,
-            },
-            {
-                title: '类型', dataIndex: 'type', width: 80,
-                render: content => this.getLogTypeMeaning(parseInt(content)),
-                // 添加过滤器用于审计
-                filters: this.getTypeColumnFilters(logs, "type"),
-                filterMultiple: true,
-                onFilter: (value, record) => this.getLogTypeMeaning(record.type).indexOf(value) === 0,
-            },
-            {
-                title: '标题', dataIndex: 'title', width: 80,
-                // 添加过滤器用于审计
-                filters: GetTableColumnFilters(logs, "title"),
-                filterMultiple: true,
-                onFilter: (value, record) => record.title.indexOf(value) === 0,
-            },
-            {
-                title: '日志内容', dataIndex: 'contents', width: 260,
-                render: content => <EllipsisText content={content} width={260 * ratio} />,
-            },
-            {
-                title: '用户名', dataIndex: 'account_alias', width: 100,
-                // 添加过滤器用于审计
-                filters: GetTableColumnFilters(logs, "account_alias"),
-                filterMultiple: true,
-                onFilter: (value, record) => record.account_alias.indexOf(value) === 0,
-            },
-            {
-                title: '用户账号', dataIndex: 'account_name', width: 100,
-                // 添加过滤器用于审计
-                filters: GetTableColumnFilters(logs, "account_name"),
-                filterMultiple: true,
-                onFilter: (value, record) => record.account_name.indexOf(value) === 0,
-            },
-            {
-                title: '时间', dataIndex: 'create_time', width: 130,
-            },
-            {
-                title: '',
-                width: 150,
-                render: () => (
-                    <span>
-                    </span>
-                ),
-            },
-        ];
+        const { logs, logFieldList } = this.state;
+        let tableColumns = [];
+        let logColumn = {
+            title: '序号', dataIndex: 'index', key: 'key', width: 80,
+        };
+        tableColumns.push(logColumn);
+        for (let item of logFieldList) {
+            // 显示类型和级别
+            if (item.is_display === '1' && item.log_field === 'type') {
+                logColumn = {
+                    title: '类型', dataIndex: 'type', width: 80,
+                    render: content => this.getLogTypeMeaning(parseInt(content)),
+                    // 添加过滤器用于审计
+                    filters: this.getTypeColumnFilters(logs, "type"),
+                    filterMultiple: true,
+                    onFilter: (value, record) => this.getLogTypeMeaning(record.type).indexOf(value) === 0,
+                };
+                tableColumns.push(logColumn);
+
+                logColumn = {
+                    title: '级别', dataIndex: 'level', width: 80,
+                    // 添加过滤器用于审计
+                    filters: this.getLevelColumnFilters(logs, "type"),
+                    filterMultiple: true,
+                    onFilter: (value, record) => this.getLogLevelMeaning(record.type).indexOf(value) === 0,
+                };
+                tableColumns.push(logColumn);
+            } else if (item.is_display === '1' && item.log_field === 'title') {
+                logColumn = {
+                    title: '标题', dataIndex: 'title', width: 80,
+                    // 添加过滤器用于审计
+                    filters: GetTableColumnFilters(logs, "title"),
+                    filterMultiple: true,
+                    onFilter: (value, record) => record.title.indexOf(value) === 0,
+                };
+                tableColumns.push(logColumn);
+            } else if (item.is_display === '1' && item.log_field === 'contents') {
+                logColumn = {
+                    title: '日志内容', dataIndex: 'contents', width: 260,
+                    render: content => <EllipsisText content={content} width={260 * ratio} />,
+                };
+                tableColumns.push(logColumn);
+            } else if (item.is_display === '1' && item.log_field === 'account_info') {
+                logColumn = {
+                    title: '用户账号', dataIndex: 'account_name', width: 100,
+                    // 添加过滤器用于审计
+                    filters: GetTableColumnFilters(logs, "account_name"),
+                    filterMultiple: true,
+                    onFilter: (value, record) => record.account_name.indexOf(value) === 0,
+                };
+                tableColumns.push(logColumn);
+            } else if (item.is_display === '1' && item.log_field === 'create_time') {
+                logColumn = { title: '时间', dataIndex: 'create_time', width: 130, };
+                tableColumns.push(logColumn);
+            }
+        }
+        logColumn = {
+            title: '',
+            width: 150,
+            render: () => (
+                <span>
+                </span>
+            ),
+        };
+        tableColumns.push(logColumn);
+
+        // const constantTableColumns = [
+        //     {
+        //         title: '序号', dataIndex: 'index', key: 'key', width: 80,
+        //     },
+        //     {
+        //         title: '级别', dataIndex: 'level', width: 80,
+        //         // 添加过滤器用于审计
+        //         filters: this.getLevelColumnFilters(logs, "type"),
+        //         filterMultiple: true,
+        //         onFilter: (value, record) => this.getLogLevelMeaning(record.type).indexOf(value) === 0,
+        //     },
+        //     {
+        //         title: '类型', dataIndex: 'type', width: 80,
+        //         render: content => this.getLogTypeMeaning(parseInt(content)),
+        //         // 添加过滤器用于审计
+        //         filters: this.getTypeColumnFilters(logs, "type"),
+        //         filterMultiple: true,
+        //         onFilter: (value, record) => this.getLogTypeMeaning(record.type).indexOf(value) === 0,
+        //     },
+        //     {
+        //         title: '标题', dataIndex: 'title', width: 80,
+        //         // 添加过滤器用于审计
+        //         filters: GetTableColumnFilters(logs, "title"),
+        //         filterMultiple: true,
+        //         onFilter: (value, record) => record.title.indexOf(value) === 0,
+        //     },
+        //     {
+        //         title: '日志内容', dataIndex: 'contents', width: 260,
+        //         render: content => <EllipsisText content={content} width={260 * ratio} />,
+        //     },
+        //     {
+        //         title: '用户名', dataIndex: 'account_alias', width: 100,
+        //         // 添加过滤器用于审计
+        //         filters: GetTableColumnFilters(logs, "account_alias"),
+        //         filterMultiple: true,
+        //         onFilter: (value, record) => record.account_alias.indexOf(value) === 0,
+        //     },
+        //     {
+        //         title: '用户账号', dataIndex: 'account_name', width: 100,
+        //         // 添加过滤器用于审计
+        //         filters: GetTableColumnFilters(logs, "account_name"),
+        //         filterMultiple: true,
+        //         onFilter: (value, record) => record.account_name.indexOf(value) === 0,
+        //     },
+        //     {
+        //         title: '时间', dataIndex: 'create_time', width: 130,
+        //     },
+        //     {
+        //         title: '',
+        //         width: 150,
+        //         render: () => (
+        //             <span>
+        //             </span>
+        //         ),
+        //     },
+        // ];
         // 查询定制日志项，构造tableColumns
-        let tableColumns = constantTableColumns;
+        // tableColumns = constantTableColumns;
         this.setState({ columns: tableColumns });
     }
 
@@ -271,9 +340,11 @@ class SystemLogsView extends React.Component {
     }
 
     /** 处理页面变化（页面跳转/切换/每页记录数变化） */
-    handlePageChange = (currentPage, pageSize) => {
-        this.setState({ currentPage, pageSize });
-        this.querySystemLogs(currentPage, pageSize);
+    handlePageChange = (pagination, filters, sorter) => {
+        if (pagination.current !== this.state.currentPage && filters.title !== undefined) {
+            this.setState({ currentPage: pagination.current, pageSize: pagination.pageSize });
+            this.querySystemLogs(pagination.current, pagination.pageSize);
+        }
     }
 
     onSelectChange = selectedRowKeys => {
@@ -298,9 +369,13 @@ class SystemLogsView extends React.Component {
             scroll: { x: scrollWidth, y: scrollHeight },
             //scroll: { y: newScrollHeight },
             bordered: true,
+            onChange(pagination, filters, sorter) {
+                self.handlePageChange(pagination, filters, sorter);
+            },
             pagination: {
                 total: totalResult > 0 ? totalResult : 10,
                 showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
+                //showTotal: (totalResult, range) => `${range[0]}-${range[1]} / ${totalResult}`,
                 pageSizeOptions: [DEFAULT_PAGE_SIZE.toString(), '20', '30', '40'],
                 defaultPageSize: DEFAULT_PAGE_SIZE,
                 //showQuickJumper: true,
@@ -308,9 +383,9 @@ class SystemLogsView extends React.Component {
                 onShowSizeChange(current, pageSize) {  //当几条一页的值改变后调用函数，current：改变显示条数时当前数据所在页；pageSize:改变后的一页显示条数
                     self.handlePageChange(current, pageSize);
                 },
-                onChange(current, pageSize) {  //点击改变页数的选项时调用函数，current:将要跳转的页数
-                    self.handlePageChange(current, pageSize);
-                },
+                // onChange(current, pageSize) {  //点击改变页数的选项时调用函数，current:将要跳转的页数
+                //     self.handlePageChange(current, pageSize);
+                // },
             }
         };
         return tableProps;

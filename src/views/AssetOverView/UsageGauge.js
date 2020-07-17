@@ -34,7 +34,7 @@ class UsageGauge extends Component {
                 {
                     name: '使用率',
                     type: 'gauge',
-                    radius: "90%",
+                    radius: "80%",
                     detail: {formatter:'{value}%'},
                     data: [{value: 50, name}]
                 }

@@ -12,22 +12,24 @@ import MEvent from '../../rlib/utils/MEvent';
 import { generateUuidStr } from '../../utils/tools';
 import { columns as Column } from './Column';
 import CompileParamsConfig from './CompileParamsConfig';
+import SourceCodeView from './SourceCodeView';
+import { DeepClone, DeepCopy } from '../../utils/ObjUtils';
+import RestReq from '../../utils/RestReq';
 
 let outerBox;
 let consoleBox;
-let speed;
 let timer300ms = undefined;
 let scrollTimer = undefined;
 let socket = null;
+let SCROLL_HEIGHT = 600;
 const DEFAULT_PAGE_SIZE = 10;
 const Option = Select.Option;
-//const { Text, Title } = Typography;
 
 const styles = theme => ({
     macro: {
         boxSizing: 'border-box',
         width: '100%',
-        height: 600,
+        height: SCROLL_HEIGHT,
         overflowY: 'auto',
         fontSize: 13,
         padding: 10,
@@ -48,12 +50,6 @@ const styles = theme => ({
     },
 });
 
-let list = [
-    { index: 1, title: '水电终端-41', version: 'v1.1', fileNum: 130, compile_result: 1 },
-    { index: 2, title: '水电终端-42', version: 'v1.3', fileNum: 120, compile_result: 2 },
-    { index: 3, title: '水电终端-43', version: 'v1.11', fileNum: 110, compile_result: 3 },
-    { index: 4, title: '水电终端-44', version: 'v12.112', fileNum: 30, compile_result: 0 },];
-
 @inject('userStore')
 @observer
 class ComponentCompileView extends React.Component {
@@ -63,68 +59,79 @@ class ComponentCompileView extends React.Component {
             pageSize: DEFAULT_PAGE_SIZE,
             currentPage: 1,     // Table中当前页码（从 1 开始）
             selectRowIndex: -1,
-            componetsList: list,
+            componentsList: [],
             showConfig: false,
+            showSourceCode: false,
             columns: Column(),
+            arch: 'x86',
+            task_id: '',
             dirPath: '',
             fileNum: '',
             loading: true,
-            content: 'IRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-                '\nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-                '\nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-                '\nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-                '\nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-                '\nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-                '\nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-                '\nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-                '\nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-                '\nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-                '\nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-                '\nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-                '\nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-                '\nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-                '\nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-                '\nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-                '\nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-                '\nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-                '\nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-                '\nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-                '\nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-                '\nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-                '\nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-                '\nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-                '\nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-                '\nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-                '\nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}',
+            content: '',
         }
-        //this.getAllComponets();
+        this.getAllComponets();
+    }
+
+    getAllComponetsCB = (data) => {
+        let componentsList = [];
+        if (data.code !== 'ERROR_OK' || data.payload === undefined)
+            return;
+
+        componentsList = data.payload.map((item, index) => {
+            let componentItem = DeepClone(item);
+            componentItem.index = index + 1;
+            componentItem.key = index + 1;
+            return componentItem;
+        })
+        this.setState({ componentsList });
     }
 
     getAllComponets = () => {
-        this.setState({ componetsList: list });
+        RestReq.asyncGet(this.getAllComponetsCB, '/firmware-analyze/component/async_funcs/list');
+    }
+
+    getComponetSource = () => {
+        if (this.state.selectRowIndex < 0) {
+            message.info("请选择一个组件进行查看！");
+            return;
+        }
+        this.setState({ showSourceCode: true });
     }
 
     handleSelectCompileResult = () => {
-        this.setState({ showConfig: true });
+        if (this.state.selectRowIndex < 0) {
+            message.info("请选择一个组件进行查看！");
+            return;
+        }
+        const { selectRowIndex, componentsList } = this.state;
+        const compileItem = componentsList[selectRowIndex - 1];
+        if (compileItem.compile === 1) {
+            this.setState({ showConfig: true });
+        } else {
+            message.info("请先编译成功当前组件！");
+        }
     }
 
-    getCompileID = () => {
-        const { selectRowIndex, componetsList } = this.state;
-        const compileItem = componetsList[selectRowIndex];
-        return compileItem.uuid;
+    getCompileItem = () => {
+        const { selectRowIndex, componentsList } = this.state;
+        const compileItem = componentsList[selectRowIndex - 1];
+        return compileItem;
     }
 
     handleCloseConfig = (isOk) => {
         this.setState({ showConfig: false });
     }
 
+    handleCloseSourceCode = (isOk) => {
+        this.setState({ showSourceCode: false });
+    }
+
     componentDidMount() {
         MEvent.register('my_select_compile_result', this.handleSelectCompileResult);
         outerBox = this.outerContainer;
         consoleBox = this.consolecontainer;
-        speed = 10;
-        scrollTimer = setInterval(this.scroll, speed);
-        //timer300ms = setInterval(() => this.updateCompileContent(), 300);
+        scrollTimer = setInterval(this.scroll, 1);
 
         // 开启 websocket ，实时获取编译内容
         this.openWebsocket();
@@ -133,7 +140,6 @@ class ComponentCompileView extends React.Component {
     componentWillUnmount() {
         MEvent.unregister('my_select_compile_result', this.handleSelectCompileResult);
         // 清除定时器
-        clearInterval(timer300ms);
         clearInterval(scrollTimer);
         if (socket != null)
             socket.close();
@@ -175,42 +181,60 @@ class ComponentCompileView extends React.Component {
     processSockMessage = (data) => {
         let message = JSON.parse(data);
         if (message.type === sockMsgType.FIRMWARE_INFO && this.state.task_id === message.payload.task_id) {
-            if (message.payload.content !== undefined) {
-                this.updateCompileContent(message.payload.content);
+            if (message.payload.result !== undefined) {
+                if (message.payload.percentage === 100) {
+                    let end = '\n 编译完成！'
+                    this.updateCompileContent(message.payload.result + end);
+                    this.getAllComponets();
+                } else {
+                    this.updateCompileContent(message.payload.result);
+                }
             }
         } else {
             // 其它消息类型不做处理
         }
     }
 
-    updateCompileContent = (data) => {
+    compileComponentCB = (data) => {
+        if (data.code !== 'ERROR_OK') {
+            return;
+        }
+        let content = '正在编译' + this.getCompileItem().file_path + ' ......';
+        this.setState({ content, task_id: data.payload.task_id });
+    }
+
+    compileComponent = () => {
         if (this.state.selectRowIndex < 0) {
             message.info("请选择一个组件进行编译！");
             return;
         }
+        RestReq.asyncGet(this.compileComponentCB, '/firmware-analyze/component/async_funcs/compile', { arch: this.state.arch, pack_id: this.getCompileItem().pack_id });
+    }
+
+    updateCompileContent = (data) => {
         let content = this.state.content;
-        content = content + //data
-            'hello t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-            'tttt t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-            ' tttt t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-            'tttt IRSB t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-            'tttt IRSB t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-            ' tttt  wowo \nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-            ' tttt  wowo  \nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-            ' tttt  wowo  \nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-            '  tttt  wowo  \nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-            ' tttt  wowo  \nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-            ' tttt  wowo  \nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-            ' tttt  wowo  \nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-            ' tttt  wowo  \nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}';
+        content = content + '\n' + data;
+        //     'hello t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
+        //     'tttt t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
+        //     ' tttt t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
+        //     'tttt IRSB t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
+        //     'tttt IRSB t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
+        //     ' tttt  wowo \nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
+        //     ' tttt  wowo  \nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
+        //     ' tttt  wowo  \nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
+        //     '  tttt  wowo  \nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
+        //     ' tttt  wowo  \nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
+        //     ' tttt  wowo  \nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
+        //     ' tttt  wowo  \nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
+        //     ' tttt  wowo  \nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}';
 
         this.setState({ content });
     }
 
     //滚动
     scroll = () => {
-        if (outerBox.scrollTop + 100 >= consoleBox.scrollHeight) {
-            outerBox.scrollTop = 0;
+        if (outerBox.scrollTop + 100 >= SCROLL_HEIGHT) {
+            outerBox.scrollTop = consoleBox.scrollHeight;
         } else {
             outerBox.scrollTop++;
         }
@@ -255,23 +279,14 @@ class ComponentCompileView extends React.Component {
         this.setState({ currentPage, pageSize });
     }
 
-    isSelectedSuccessItem = () => {
-        // const { selectRowIndex, componetsList } = this.state;
-        // const compileItem = componetsList[selectRowIndex];
-        // if (compileItem.compile_result === 1) {
-        //     return true;
-        // }
-        return true;
-    }
-
-    handlePropChange = (event) => {
+    handlePropChange = (value) => {
+        this.setState({ arch: value });
     }
 
     render() {
-        //const {  } = this.state;
         const { classes } = this.props;
         const userStore = this.props.userStore;
-        const { columns, componetsList, showConfig } = this.state;
+        const { columns, componentsList, showConfig, showSourceCode } = this.state;
         let self = this;
 
         return (
@@ -281,7 +296,7 @@ class ComponentCompileView extends React.Component {
                         <Card title={'组件源码选择'} style={{ height: '100%', margin: 8 }} headStyle={MAntdCard.headerStyle('main')}>
                             <Table
                                 columns={columns}
-                                dataSource={componetsList}
+                                dataSource={componentsList}
                                 bordered={true}
                                 rowKey={record => record.uuid}
                                 rowClassName={this.setRowClassName}
@@ -290,25 +305,25 @@ class ComponentCompileView extends React.Component {
                             />
                             <br />
                             <Row>
-                                <Col span={3}>
-                                    <Typography variant="subtitle1" style={{ marginTop: 5 }}>编译参数：</Typography>
+                                <Col span={3} style={{ marginTop: 10 }}>
+                                    <Typography variant="paragraph">编译参数：</Typography>
                                 </Col>
                                 <Col span={6}>
-                                    <Select size='large' placeholder='选择编译参数' style={{ width: 200 }} onChange={this.handlePropChange.bind(this)}>
-                                        <Option value="ARM">ARM</Option>
-                                        <Option value="X86">X86</Option>
-                                        <Option value="MTPS">MTPS</Option>
-                                        <Option value="PowerPC">PowerPC</Option>
+                                    <Select size='large' placeholder='选择编译参数' defaultValue='x86' style={{ width: 200 }} onChange={this.handlePropChange.bind(this)}>
+                                        <Option value="x86">X86</Option>
+                                        <Option value="arm">ARM</Option>
+                                        <Option value="mtps">MTPS</Option>
+                                        <Option value="powerpc">PowerPC</Option>
                                     </Select>
                                 </Col>
                                 <Col span={3} offset={1}>
-                                    <Button size={'large'} type='primary' onClick={this.updateCompileContent}>执行组件编译</Button>
+                                    <Button size={'large'} type='primary' onClick={this.compileComponent}>执行组件编译</Button>
                                 </Col>
-                                <Col span={3} offset={2}>
-                                    <Button size={'large'} type='primary' onClick={this.updateCompileContent}>查看源码文件</Button>
+                                <Col span={3} offset={1}>
+                                    <Button size={'large'} type='primary' onClick={this.getComponetSource}>查看源码文件</Button>
                                 </Col>
-                                <Col span={3} offset={2}>
-                                    <Button disabled={!this.isSelectedSuccessItem()} size={'large'} type='primary' onClick={this.handleSelectCompileResult}>查看编译结果</Button>
+                                <Col span={3} offset={1}>
+                                    <Button size={'large'} type='primary' onClick={this.handleSelectCompileResult}>查看编译结果</Button>
                                 </Col>
                             </Row>
                         </Card>
@@ -323,7 +338,8 @@ class ComponentCompileView extends React.Component {
                         </Card>
                     </Col>
                 </Row>
-                {showConfig && <CompileParamsConfig compileID={this.getCompileID} actioncb={this.handleCloseConfig} />}
+                {showConfig && <CompileParamsConfig compileID={this.getCompileItem().pack_id} compileName={this.getCompileItem().name} actioncb={this.handleCloseConfig} />}
+                {showSourceCode && <SourceCodeView compileID={this.getCompileItem().pack_id} compileName={this.getCompileItem().name} actioncb={this.handleCloseSourceCode} />}
                 {/* <Row>
                         <Col span={10}>
                             <FormControl disabled margin="normal" fullWidth>

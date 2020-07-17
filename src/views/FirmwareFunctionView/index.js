@@ -30,7 +30,7 @@ let fileListData = [];
 let expandedChildNum = 0;
 let firstMatchedIndex = 0;
 const { Search } = Input;
-const TREE_HEIGHT = 1000;
+const TREE_HEIGHT = 900;
 const styles = theme => ({
     iconButton: {
         margin: 0,

@@ -3,7 +3,7 @@ import MAntdTable from '../../rlib/props/MAntdTable';
 
 export function VulColumns() {
   let colsList = [
-    { title: '序号', width: 60, dataIndex: 'index' },
+    { title: '序号', width: 80, dataIndex: 'index' },
     { title: '漏洞编号', width: 120, dataIndex: 'edb_id', myNoWrap: true, mySort: true },
     { title: '漏洞名称', width: 200, dataIndex: 'title', myNoWrap: true, mySort: true },
     { title: '漏洞类型', width: 120, dataIndex: 'type', myNoWrap: true, mySort: true },

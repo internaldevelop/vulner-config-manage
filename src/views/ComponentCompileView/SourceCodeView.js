@@ -40,7 +40,7 @@ const styles = theme => ({
 
 @inject('userStore')
 @observer
-class CompileParamsConfig extends React.Component {
+class SourceCodeView extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -73,12 +73,8 @@ class CompileParamsConfig extends React.Component {
         actionCB(false, {});
     }
 
-    clickTab = (value) => {
-        RestReq.asyncGet(this.getTreeDataCB, '/firmware-analyze/component/async_funcs/list_make', { arch: value, pack_id: this.props.compileID, tree_type: 'antd' });
-    }
-
     render() {
-        const modalTitle = <Draggable title='组件编译结果' />;
+        const modalTitle = <Draggable title='源码文件查看' />;
         const { classes } = this.props;
         const { fileTreeData } = this.state;
         return (
@@ -93,48 +89,19 @@ class CompileParamsConfig extends React.Component {
             >
                 <form style={{ width: '100%', height: 400 }}>
                     <Typography variant="subtitle1" style={{ marginTop: 5 }}>{'组件名称：' + this.props.compileName}</Typography>
-                    <Row>
-                        <Col>
-                            <Tabs defaultActiveKey="x86" onTabClick={this.clickTab} >
-                                <TabPane tab="ARM" key="arm">
-                                    <div id='armTree' className={classes.fileTreeContainer}>
-                                        <Tree
-                                            treeData={fileTreeData}
-                                        />
-                                    </div>
-                                </TabPane>
-                                <TabPane tab="X86" key="x86">
-                                    <div id='x86Tree' className={classes.fileTreeContainer}>
-                                        <Tree
-                                            treeData={fileTreeData}
-                                        />
-                                    </div>
-                                </TabPane>
-                                <TabPane tab="MTPS" disabled key="mtps">
-                                    <div id='mtpsTree' className={classes.fileTreeContainer}>
-                                        <Tree
-                                            treeData={fileTreeData}
-                                        />
-                                    </div>
-                                </TabPane>
-                                <TabPane tab="PowerPC" disabled key="powerpc">
-                                    <div id='powerPCTree' className={classes.fileTreeContainer}>
-                                        <Tree
-                                            treeData={fileTreeData}
-                                        />
-                                    </div>
-                                </TabPane>
-                            </Tabs>
-                        </Col>
-                    </Row>
+                    <div id='codeTree' className={classes.fileTreeContainer}>
+                        <Tree
+                            treeData={fileTreeData}
+                        />
+                    </div>
                 </form>
             </Modal>
         );
     }
 }
 
-CompileParamsConfig.propTypes = {
+SourceCodeView.propTypes = {
     classes: PropTypes.object,
 };
 
-export default withStyles(styles)(CompileParamsConfig);
+export default withStyles(styles)(SourceCodeView);

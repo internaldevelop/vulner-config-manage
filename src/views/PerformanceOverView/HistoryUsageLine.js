@@ -73,8 +73,8 @@ class HistoryUsageLine extends Component {
         let usageData;
         if (name === 'CPU') {
             usageData = infoStore.historyCpuPercents;
-            if (infoStore.cpuUsed !== null && infoStore.cpuUsed !== undefined) {
-                usedPercent = infoStore.cpuUsed.toFixed(4);
+            if (infoStore.cpuUsed[0] !== null && infoStore.cpuUsed[0] !== undefined) {
+                usedPercent = infoStore.cpuUsed[0].toFixed(4);
             }
             itemStyle = {
                 normal: {
@@ -88,8 +88,8 @@ class HistoryUsageLine extends Component {
             };
         } else if (name === '内存') {
             usageData = infoStore.historyMemPercents;
-            if (infoStore.memUsed !== null && infoStore.memUsed !== undefined) {
-                usedPercent = infoStore.memUsed.toFixed(4);
+            if (infoStore.memUsed[0] !== null && infoStore.memUsed[0] !== undefined) {
+                usedPercent = infoStore.memUsed[0].toFixed(4);
             }
             itemStyle = {
                 normal: {
@@ -103,8 +103,8 @@ class HistoryUsageLine extends Component {
             };
         } else if (name === '硬盘') {
             usageData = infoStore.historyDiskPercents;
-            if (infoStore.diskUsed !== null && infoStore.diskUsed !== undefined) {
-                usedPercent = infoStore.diskUsed.toFixed(5);
+            if (infoStore.diskUsed[0] !== null && infoStore.diskUsed[0] !== undefined) {
+                usedPercent = infoStore.diskUsed[0].toFixed(5);
             }
             itemStyle = {
                 normal: {

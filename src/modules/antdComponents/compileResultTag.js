@@ -13,13 +13,13 @@ export default function compileResultTag(compileResult) {
     }
 
     let color = '#436EEE';
-    let tag = '等待编译';
-    if (compileResult === 2) {
+    let tag = '等待编译';//0
+    if (compileResult === 99) {
         color = '#d4380d';
         tag = '编译失败';
-    } else if (compileResult === 3) {
-        color = '#8A2BE2';
-        tag = '正在编译';
+    // } else if (compileResult === 3) {
+    //     color = '#8A2BE2';
+    //     tag = '正在编译';
     } else if (compileResult === 1) {
         color = '#389e0d';
         tag = '编译成功';

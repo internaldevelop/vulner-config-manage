@@ -4,9 +4,9 @@ import { DeepClone } from '../../utils/ObjUtils'
 configure({ enforceActions: 'observed' })
 
 class AssetInfoStore {
-    @observable cpuUsed = 0.0;
-    @observable memUsed = 0.0;
-    @observable diskUsed = 0.0;
+    @observable cpuUsed = [0.0];
+    @observable memUsed = [0.0];
+    @observable diskUsed = [0.0];//由值改成数组形式，否则当数值没有变化的时候，mobx不会渲染
     @observable procCpuPercents = [];
     @observable procMemPercents = [];
     @observable historyCpuPercents = [];
@@ -14,13 +14,13 @@ class AssetInfoStore {
     @observable historyDiskPercents = [];
 
     @action setCpu = (percent) => {
-        this.cpuUsed = percent;
+        this.cpuUsed = [percent];
     }
     @action setMem = (percent) => {
-        this.memUsed = percent;
+        this.memUsed = [percent];
     }
     @action setDisk = (percent) => {
-        this.diskUsed = percent;
+        this.diskUsed = [percent];
     }
     @action setProcCpu = (procCpu) => {
         this.procCpuPercents = procCpu;
