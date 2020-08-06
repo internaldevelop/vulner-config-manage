@@ -14,6 +14,7 @@ const hostMenus = [
             { key: '/home/firmware-analyze/component-compile', title: '组件编译', icon: 'file',},
             { key: '/home/firmware-analyze/feature-extration', title: '组件特征提取', icon: 'key',},
             { key: '/home/firmware-analyze/component-connect', title: '组件关联', icon: 'fork',},
+            { key: '/home/firmware-analyze/report-download', title: '报告下载', icon: 'download' },
         ]
     },
     {
@@ -36,7 +37,8 @@ const hostMenus = [
         key: '/home/log-manage',
         subs: [
             { key: '/home/log-manage/log-custom', title: '日志格式定制', icon: 'book', },
-            { key: '/home/log-manage/system-logs', title: '系统日志', icon: 'alert', },
+            { key: '/home/log-manage/system-logs', title: '日志管理', icon: 'alert', },
+            { key: '/home/log-manage/log-copy', title: '日志备份', icon: 'copy', },
             { key: '/home/log-manage/log-download', title: '日志下载', icon: 'download' },
         ]
     },

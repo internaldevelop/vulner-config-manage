@@ -1,16 +1,15 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import ReactDOM from 'react-dom';
 import { withStyles } from '@material-ui/core/styles';
-import { observer, inject } from 'mobx-react'
-import Draggable from '../../components/window/Draggable'
-import { Modal, Row, Col, message, Icon, Button, Typography } from 'antd';
 import TextField from '@material-ui/core/TextField';
-import { isContainSpecialCharacter } from '../../utils/ObjUtils'
-
+import { Col, message, Modal, Row, Typography } from 'antd';
+import { inject, observer } from 'mobx-react';
+import PropTypes from 'prop-types';
+import React from 'react';
+import Draggable from '../../components/window/Draggable';
 import { actionType } from '../../global/enumeration/ActionType';
 import { errorCode } from '../../global/error';
-import { eng2chn } from '../../utils/StringUtils'
+import { isContainSpecialCharacter } from '../../utils/ObjUtils';
+import { eng2chn } from '../../utils/StringUtils';
+import RestReq from '../../utils/RestReq';
 
 const { Text } = Typography;
 
@@ -35,8 +34,6 @@ const styles = theme => ({
     },
 });
 
-let firmwareAlert = '';
-
 @inject('firmwareStore')
 @inject('userStore')
 @observer
@@ -53,7 +50,7 @@ class FirmwareParamsConfig extends React.Component {
         actionCB(false, {});
     }
 
-    requestAssetCB = (action) => (data) => {
+    requestCB = (action) => (data) => {
         let actionCB = this.props.actioncb;
         let successInfo;
 
@@ -65,9 +62,9 @@ class FirmwareParamsConfig extends React.Component {
             successInfo = "操作成功";
         }
 
-        if (data.code === errorCode.ERROR_OK) {
+        if (data.code === 'ERROR_OK') {
             message.info(successInfo);
-            this.props.firmwareStore.setParam("uuid", data.payload.firmware_uuid);
+            //this.props.firmwareStore.setParam("uuid", data.payload.firmware_uuid);
             // 调用父组件传入的回调函数，第一个参数 true 表示本组件的参数设置已确认，且策略记录已在后台创建或更新
             actionCB(true, {});
         } else {
@@ -78,21 +75,20 @@ class FirmwareParamsConfig extends React.Component {
     }
 
     handleOk = (e) => {
-        const { uuid, firmware_id, fw_file_name, fw_manufacturer, application_mode } = this.props.firmwareStore.firmwareItem;
-        const { userUuid } = this.props.userStore.loginUser;
-        if (!this.checkData()) {
-            return false;
-        }
+        const { pack_id, name, manufacturer, model } = this.props.firmwareStore.firmwareItem;
+        // if (!this.checkData()) {
+        //     return false;
+        // }
         if (this.props.firmwareStore.firmwareAction === actionType.ACTION_NEW) {
             // 向后台发送请求，创建一条新的固件记录
         } else if (this.props.firmwareStore.firmwareAction === actionType.ACTION_EDIT) {
-            // 向后台发送请求，更新固件数据
-            // TODO, 这里需要请求更新固件接口
+            RestReq.asyncPost(this.requestCB('update'), '/firmware-analyze/fw_analyze/pack/edit',
+            { name, manufacturer, model, pack_id });
         }
     }
 
     checkData() {
-        let fw_file_name = document.getElementById('fw_file_name').value;
+        let fw_file_name = document.getElementById('name').value;
         
         if (fw_file_name === null || fw_file_name === '') {
             message.info('固件名称不能为空，请重新输入');
@@ -111,27 +107,19 @@ class FirmwareParamsConfig extends React.Component {
     }
 
     handleFirmwareNameChange = (event) => {
-        let name = event.target.value;
-        if (name === null || name === '' || name === undefined) {
-            firmwareAlert = '固件名称不能为空，请重新输入';
-            return false;
-        } else if (name.length > 20) {
-            firmwareAlert = '资产名称长度不能超过20，请重新输入';
-            return false;
-        }
-        this.props.firmwareStore.setParam("fw_file_name", event.target.value);
+        this.props.firmwareStore.setParam("name", event.target.value);
     }
 
-    handleFWManufacturerChange = (event) => {
-        this.props.firmwareStore.setParam("fw_manufacturer", event.target.value);
+    handleManufacturerChange = (event) => {
+        this.props.firmwareStore.setParam("manufacturer", event.target.value);
     }
 
-    handleApplicationModeChange = (event) => {
-        this.props.firmwareStore.setParam("application_mode", event.target.value);
+    handleModelChange = (event) => {
+        this.props.firmwareStore.setParam("model", event.target.value);
     }
 
     render() {
-        const { uuid, firmware_id, fw_file_name, fw_manufacturer, application_mode } = this.props.firmwareStore.firmwareItem;
+        const { name, manufacturer, model } = this.props.firmwareStore.firmwareItem;
         const modalTitle = <Draggable title={this.props.firmwareStore.firmwareProcName} />;
         return (
             <Modal
@@ -140,24 +128,22 @@ class FirmwareParamsConfig extends React.Component {
                 maskClosable={false}
                 destroyOnClose={true}
                 visible={true}
-                onOk={this.handleOk}
-                onCancel={this.handleCancel}
+                onOk={this.handleOk.bind(this)}
+                onCancel={this.handleCancel.bind(this)}
             >
                 <form>
-                    <TextField required fullWidth autoFocus id="fw_file_name" label="固件名称" defaultValue={fw_file_name}
-                        variant="outlined" margin="normal" onChange={this.handleFirmwareNameChange}
+                    <TextField required fullWidth autoFocus id="name" label="固件名称" defaultValue={name}
+                        variant="outlined" margin="normal" onChange={this.handleFirmwareNameChange.bind(this)}
                     />
-                    <Text type="danger"><br />{firmwareAlert}</Text> :
-                        <Text styles={{ color: '#4caf50' }}><br />{firmwareAlert}</Text>
                     <Row>
-                        <Col span={12}>
-                            <TextField required id="fw_manufacturer" label="厂商" defaultValue={fw_manufacturer}
-                                variant="outlined" margin="normal" onChange={this.handleIpChange}
+                        <Col span={11}>
+                            <TextField fullWidth id="manufacturer" label="厂商" defaultValue={manufacturer}
+                                variant="outlined" margin="normal" onChange={this.handleManufacturerChange.bind(this)}
                             />
                         </Col>
-                        <Col span={12}>
-                            <TextField required id="application_mode" label="设备类型" defaultValue={application_mode}
-                                variant="outlined" margin="normal" onChange={this.handleIpChange}
+                        <Col span={11} offset={1}>
+                            <TextField fullWidth id="model" label="设备类型" defaultValue={model}
+                                variant="outlined" margin="normal" onChange={this.handleModelChange.bind(this)}
                             />
                         </Col>
                     </Row>

@@ -109,7 +109,7 @@ class ComponentCompileView extends React.Component {
         if (compileItem.compile === 1) {
             this.setState({ showConfig: true });
         } else {
-            message.info("请先编译成功当前组件！");
+            message.info("请先成功编译当前组件！");
         }
     }
 
@@ -214,20 +214,6 @@ class ComponentCompileView extends React.Component {
     updateCompileContent = (data) => {
         let content = this.state.content;
         content = content + '\n' + data;
-        //     'hello t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-        //     'tttt t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-        //     ' tttt t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-        //     'tttt IRSB t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-        //     'tttt IRSB t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-        //     ' tttt  wowo \nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-        //     ' tttt  wowo  \nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-        //     ' tttt  wowo  \nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-        //     '  tttt  wowo  \nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-        //     ' tttt  wowo  \nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-        //     ' tttt  wowo  \nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-        //     ' tttt  wowo  \nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}' +
-        //     ' tttt  wowo  \nIRSB \{t0:Ity_I32 t1:Ity_I64 t2:Ity_I64 t3:Ity_I64 00 | ------ IMark(0x4003e0, 6, 0) ------01 | t2 = LDle:I64(0x0000000000601018)NEXT: PUT(rip) = t2; Ijk_Boring}';
-
         this.setState({ content });
     }
 
@@ -293,7 +279,7 @@ class ComponentCompileView extends React.Component {
             <Skeleton loading={!userStore.isNormalUser} active avatar>
                 <Row>
                     <Col span={12}>
-                        <Card title={'组件源码选择'} style={{ height: '100%', margin: 8 }} headStyle={MAntdCard.headerStyle('main')}>
+                        <Card title={'组件源码选择'} style={{ height: 750, margin: 8 }} headStyle={MAntdCard.headerStyle('main')}>
                             <Table
                                 columns={columns}
                                 dataSource={componentsList}
@@ -329,7 +315,7 @@ class ComponentCompileView extends React.Component {
                         </Card>
                     </Col>
                     <Col span={12}>
-                        <Card title={'编译信息'} style={{ height: '100%', margin: 8 }} headStyle={MAntdCard.headerStyle('info-2')}>
+                        <Card title={'编译信息'} style={{ height: 750, margin: 8 }} headStyle={MAntdCard.headerStyle('info-2')}>
                             <div className={classes.macro} ref={(c) => { this.outerContainer = c }}>
                                 <div id='consolecontainer' ref={(c) => { this.consolecontainer = c }} >
                                     <p className={classes.content}>{this.state.content}</p>

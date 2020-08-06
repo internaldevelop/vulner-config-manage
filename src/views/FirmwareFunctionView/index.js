@@ -712,8 +712,10 @@ class FirmwareFunctionView extends React.Component {
                                                     }>
                                                     </Card>
                                                 }
-                                                <Modal visible={functionPreviewVisible} footer={null} onCancel={this.handleFunctionPreviewCancel}>
-                                                    <img alt="functionPreview" style={{ width: '100%' }} src={'data:image/jpg/png/gif;base64,' + functionPreviewImage} />
+                                                <Modal visible={functionPreviewVisible} footer={null}
+                                                    style={{ top: 20, minWidth: 800, minHeight: 800 }}
+                                                    onCancel={this.handleFunctionPreviewCancel.bind(this)}>
+                                                    <img alt="functionPreview" style={{ width: '100%', height: '100%' }} src={'data:image/jpg/png/gif;base64,' + functionPreviewImage} />
                                                 </Modal>
 
                                                 {/* {this.state.vexCode !== ''

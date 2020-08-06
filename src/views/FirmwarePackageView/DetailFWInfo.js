@@ -38,8 +38,8 @@ class DetailFWInfo extends React.Component {
                 maskClosable={false}
                 destroyOnClose={true}
                 visible={true}
-                onOk={this.handleOk}
-                onCancel={this.handleCancel}
+                onOk={this.handleOk.bind(this)}
+                onCancel={this.handleCancel.bind(this)}
             >
                 <Row>
                     <Col span={12}>

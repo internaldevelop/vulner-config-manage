@@ -102,7 +102,7 @@ class RestReq {
             .then((data) => {
                 console.log('axios response data:');
                 console.log(data);//输出返回的数据
-                if (!!callBack && (config.alwaysCallBack || data === null || (data.code !== undefined && data.code === 'ERROR_OK'))) {
+                if (!!callBack && (config.alwaysCallBack || data === null || data.code !== undefined)) {
                     callBack(data);
                 }
             })

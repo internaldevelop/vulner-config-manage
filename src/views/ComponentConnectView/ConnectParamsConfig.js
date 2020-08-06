@@ -1,15 +1,13 @@
 import { withStyles } from '@material-ui/core/styles';
-import { Table, Input, Button, Icon, Col, message, Modal, Row, Tabs } from 'antd';
+import { Button, Col, Icon, Input, message, Modal, Row, Table } from 'antd';
 import { inject, observer } from 'mobx-react';
 import PropTypes from 'prop-types';
 import React from 'react';
 import Draggable from '../../components/window/Draggable';
-import { errorCode } from '../../global/error';
-import Typography from '../../modules/components/Typography';
-import { eng2chn } from '../../utils/StringUtils';
-import { VulColumns } from './VulColumn';
-import { DeepClone } from '../../utils/ObjUtils'
+import { DeepClone } from '../../utils/ObjUtils';
 import RestReq from '../../utils/RestReq';
+import { VulColumns } from './VulColumn';
+import TextField from '@material-ui/core/TextField';
 
 
 const styles = theme => ({
@@ -55,6 +53,7 @@ class ConnectParamsConfig extends React.Component {
             inputValue: '',
             totalResult: 0,
             selectRowIndex: -1,
+            version: this.props.version,
         }
         this.getVulnerResults();
     }
@@ -100,7 +99,7 @@ class ConnectParamsConfig extends React.Component {
         item.serverity = data.serverity;
         item.discovererName = data.discovererName;
         let prodName = '';
-        for(let p of data.products) {
+        for (let p of data.products) {
             prodName += p.product + ' ';
         }
         item.products = prodName;
@@ -117,15 +116,26 @@ class ConnectParamsConfig extends React.Component {
         actionCB(false, {});
     }
 
+    requestCB = (data) => {
+        let actionCB = this.props.actioncb;
+        if (data.code === 'ERROR_OK') {
+            message.info(data.payload);
+            actionCB(true, {});
+        } else {
+            message.info('自动关联失败！');
+            actionCB(false, {});
+        }
+    }
+
     handleOk = (e) => {
         if (this.state.selectRowIndex < 0) {
             message.info("请选择一个漏洞进行关联！");
             return;
         }
-        // 请求后台关联漏洞
-        // 获得返回数据后更新主页面
-        let actionCB = this.props.actioncb;
-        actionCB(true, {vulNum: 111, vulName: 'test test'});
+        const { selectRowIndex, vulners } = this.state;
+        let edb_id = vulners[selectRowIndex - 1].edb_id;
+        RestReq.asyncGet(this.requestCB, '/firmware-analyze/component/async_funcs/vuler_association',
+            { name: this.props.name, file_id: this.props.file_id, version: this.state.version, edb_id });
     }
 
     handleInputValue = (event) => {
@@ -160,7 +170,7 @@ class ConnectParamsConfig extends React.Component {
         } else if (value.length > 20) {
             message.info('查询条件长度不能超过20，请重新输入');
             return false;
-        } 
+        }
         return true;
     }
 
@@ -172,10 +182,14 @@ class ConnectParamsConfig extends React.Component {
         this.getVulnerResults();
     }
 
+    handleVersionChange = (event) => {
+        this.setState({ version: event.target.value });
+    }
+
     render() {
         const modalTitle = <Draggable title='手动关联' />;
         const { classes } = this.props;
-        const { columns, vulners, totalResult } = this.state;
+        const { columns, vulners, totalResult, version } = this.state;
         let self = this;
         return (
             <Modal
@@ -184,14 +198,17 @@ class ConnectParamsConfig extends React.Component {
                 maskClosable={false}
                 destroyOnClose={true}
                 visible={true}
-                onOk={this.handleOk}
-                onCancel={this.handleCancel}
+                onOk={this.handleOk.bind(this)}
+                onCancel={this.handleCancel.bind(this)}
             >
                 <form style={{ width: '100%', height: 600 }}>
                     <Row>
-                        <Col span={20} align="left">
-                            <Input className={classes.antInput} size="large" value={this.state.inputValue} allowClear onChange={this.handleInputValue.bind(this)} placeholder="漏洞编号 漏洞名称"/>
+                        <Col span={14} align="left">
+                            <Input className={classes.antInput} size="large" allowClear onChange={this.handleInputValue.bind(this)} placeholder="漏洞编号 漏洞名称" />
                             <Button className={classes.iconButton} type="primary" size="large" onClick={this.getFuzzySearch().bind(this)}><Icon type="file-search" />查询</Button>
+                        </Col>
+                        <Col span={8}>
+                            <Input className={classes.antInput} size="large" defaultValue={version} allowClear onChange={this.handleVersionChange.bind(this)} placeholder="组件版本" />
                         </Col>
                     </Row>
                     <Table

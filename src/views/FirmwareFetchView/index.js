@@ -1,5 +1,5 @@
 import { withStyles } from '@material-ui/core/styles';
-import { Button, Card, Popconfirm, Skeleton, Table } from 'antd';
+import { Button, Card, Popconfirm, Skeleton, Table, message } from 'antd';
 import { inject } from 'mobx-react';
 import React from 'react';
 import { actionType } from '../../global/enumeration/ActionType';
@@ -101,12 +101,17 @@ class FirmwareFetchView extends React.Component {
      *  因调用请求函数时，默认参数只返回成功请求，所以此处不需要判断后台是否成功删除固件
     */
     deleteFirmwaresCB = (dataIndex) => (data) => {
-        // const { firmwareList } = this.state;
-        // // rowIndex 为行索引，第二个参数 1 为一次去除几行
-        // firmwareList.splice(dataIndex, 1);
-        // this.setState({ firmwareList });
-        // 删除完一条数据后重新取当前页面的数据, TODO, 看看是否需要这么做,或者其他方式
-        this.getAllFirmwares(this.state.currentPage, this.state.pageSize);
+        if (data.code !== 'ERROR_OK' || data.payload === undefined) {
+            message.info("删除固件包失败！");
+            return;
+        }
+        message.info("删除固件包成功！");
+        const { firmwareList } = this.state;
+        // rowIndex 为行索引，第二个参数 1 为一次去除几行
+        firmwareList.splice(dataIndex, 1);
+        this.setState({ firmwareList });
+        // 删除完一条数据后重新取当前页面的数据, TODO, python中删除完回调中发请求报错，显示连接已经close
+        //this.getAllFirmwares(this.state.currentPage, this.state.pageSize);
     }
 
     /** 处理删除操作
@@ -119,8 +124,7 @@ class FirmwareFetchView extends React.Component {
 
         // 向后台提交删除该固件
         const { firmwareList } = this.state;
-        // TODO 需要修改接口
-        // RestReq.asyncPost(this.deleteFirmwaresCB(dataIndex), '/firmware-analyze/fw-fetch/del', {}, { uuid: firmwareList[dataIndex].uuid, token: false });
+        RestReq.asyncDelete(this.deleteFirmwaresCB(dataIndex), '/firmware-analyze//fw_analyze/pack/delete', { pack_id: firmwareList[dataIndex].pack_id });
     }
 
     /** 处理编辑操作 */
@@ -151,7 +155,6 @@ class FirmwareFetchView extends React.Component {
                 this.editFirmwareParams();
             }
         }
-
         // 关闭固件数据操作窗口
         this.setState({ showConfig: false });
     }
@@ -169,7 +172,7 @@ class FirmwareFetchView extends React.Component {
     getAllFirmwares = (targetPage, pageSize) => {
         let startSet = (targetPage - 1) * pageSize + 1;
         // TODO 提供分页功能,但是接口目前没有提供分页
-        RestReq.asyncGet(this.getAllFirmwaresCB, '/firmware-analyze/fw_analyze/pack/all', { /*offset: startSet, count: pageSize*/ }, { token: false });
+        RestReq.asyncGet(this.getAllFirmwaresCB, '/firmware-analyze/fw_analyze/pack/all', { /*offset: startSet, count: pageSize*/ });
     }
 
     getAllFirmwaresCB = (data) => {

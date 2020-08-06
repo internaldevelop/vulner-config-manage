@@ -76,13 +76,8 @@ class LogParamsConfig extends React.Component {
         }
     }
 
-    addSystemLogsCB = (data) => {
-
-    }
-
     handleOk = (e) => {
-        const { vul_id, edb_id, title, author, type, platform, customized} = this.props.logStore.logItem;
-        const { userUuid } = this.props.userStore.loginUser;
+        const { vul_id, title, author, type, platform, customized } = this.props.logStore.logItem;
         if (!this.checkData()) {
             return false;
         }
@@ -96,7 +91,7 @@ class LogParamsConfig extends React.Component {
         } else if (this.props.logStore.logAction === actionType.ACTION_EDIT) {
             RestReq.asyncGet(this.requestLogCB('update'), '/fw-bend-server/vuldb/modify_vul',
                 {
-                    id: vul_id, edb_id, title, author, type, platform, customized,
+                    id: vul_id, title, author, type, platform, customized,
                 },
                 false
             );
@@ -166,20 +161,20 @@ class LogParamsConfig extends React.Component {
         this.props.logStore.setParam("title", event.target.value);
     }
 
-    handleAuthorChange = (event) => {
-        this.props.logStore.setParam("author", event.target.value);
+    handleAccountNameChange = (event) => {
+        this.props.logStore.setParam("account_name", event.target.value);
     }
 
-    handlePlatformChange = (event) => {
-        this.props.logStore.setParam("platform", event.target.value);
+    handleContentsChange = (event) => {
+        this.props.logStore.setParam("contents", event.target.value);
     }
 
-    handleTypeChange = (event) => {
-        this.props.logStore.setParam("type", event.target.value);
+    handleLevelChange = (event) => {
+        this.props.logStore.setParam("level", event.target.value);
     }
 
     render() {
-        const { edb_id, title, author, type, platform, } = this.props.logStore.logItem;
+        const { title, account_name, level, contents, } = this.props.logStore.logItem;
         const modalTitle = <Draggable title={this.props.logStore.logProcName} />;
         return (
             <Modal
@@ -188,28 +183,28 @@ class LogParamsConfig extends React.Component {
                 maskClosable={false}
                 destroyOnClose={true}
                 visible={true}
-                onOk={this.handleOk}
-                onCancel={this.handleCancel}
+                onOk={this.handleOk.bind(this)}
+                onCancel={this.handleCancel.bind(this)}
             >
                 <form>
                     <TextField required fullWidth autoFocus id="title" label="日志名称" defaultValue={title}
-                        variant="outlined" margin="normal" onChange={this.handleLogTitleChange}
+                        variant="outlined" margin="normal" onChange={this.handleLogTitleChange.bind(this)}
                     />
                     <Row>
                         <Col span={11}>
-                            <TextField required fullWidth id="author" label="发布者" defaultValue={author}
-                                variant="outlined" margin="normal" onChange={this.handleAuthorChange}
+                            <TextField required fullWidth id="level" label="类型" defaultValue={level}
+                                variant="outlined" margin="normal" onChange={this.handleLevelChange.bind(this)}
                             />
                         </Col>
                         <Col span={11} offset={2}>
-                            <TextField required fullWidth id="platform" label="平台" defaultValue={platform}
-                                variant="outlined" margin="normal" onChange={this.handlePlatformChange}
+                            <TextField required fullWidth id="account_name" label="用户账户" defaultValue={account_name}
+                                variant="outlined" margin="normal" onChange={this.handleAccountNameChange.bind(this)}
                             />
                         </Col>
                     </Row>
                     <Row>
-                        <TextField required fullWidth id="type" label="类型" defaultValue={type}
-                            variant="outlined" margin="normal" onChange={this.handleTypeChange}
+                        <TextField required fullWidth id="contents" label="日志内容" defaultValue={contents}
+                            variant="outlined" margin="normal" onChange={this.handleContentsChange.bind(this)}
                         />
                     </Row>
                 </form>

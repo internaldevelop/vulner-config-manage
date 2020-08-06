@@ -21,9 +21,11 @@ import DataBackupView from '../views/DataBackupView';
 import DataRestoreView from '../views/DataRestoreView';
 import LogCustomView from '../views/SystemLogsView/LogCustomView';
 import LogDownloadView from '../views/SystemLogsView/LogDownloadView';
+import LogCopyView from '../views/SystemLogsView/LogCopyView';
 import ComponentCompileView from '../views/ComponentCompileView';
 import ComponentConnectView from '../views/ComponentConnectView';
 import FeatureExtrationView from '../views/FeatureExtrationView';
+import ReportDownloadView from '../views/ReportDownloadView';
 
 @withRouter
 class ContentMain extends React.Component {
@@ -42,6 +44,7 @@ class ContentMain extends React.Component {
         <PrivateRoute exact path='/home/log-manage/system-logs' component={SystemLogsView} />
         <PrivateRoute exact path='/home/log-manage/log-custom' component={LogCustomView} />
         <PrivateRoute exact path='/home/log-manage/log-download' component={LogDownloadView} />
+        <PrivateRoute exact path='/home/log-manage/log-copy' component={LogCopyView} />
 
         <PrivateRoute exact path='/home/sysadmin/users' component={UsersManageView} />
         <PrivateRoute exact path='/home/sysadmin/personal' component={UserInfoView} />
@@ -53,6 +56,7 @@ class ContentMain extends React.Component {
         <PrivateRoute exact path='/home/firmware-analyze/component-compile' component={ComponentCompileView} />
         <PrivateRoute exact path='/home/firmware-analyze/component-connect' component={ComponentConnectView} />
         <PrivateRoute exact path='/home/firmware-analyze/feature-extration' component={FeatureExtrationView} />
+        <PrivateRoute exact path='/home/firmware-analyze/report-download' component={ReportDownloadView} />
 
         <PrivateRoute exact path='/home/certfile-manage/generate' component={CertFileGenerate} />
         <PrivateRoute exact path='/home/certfile-manage/import' component={CertFileImport} />

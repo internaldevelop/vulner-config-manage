@@ -1,22 +1,15 @@
-import React from 'react'
-import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
-import { observer, inject } from 'mobx-react'
-
-import { Tabs, Card, Skeleton, Select, Input, Spin, Button, Row, Col, Icon, Collapse, message, Modal } from 'antd';
-
-import { renderAssetInfo } from './AssetInfo';
-import ProcUsageLine from '../AssetOverView/ProcUsageLine';
-import HistoryUsageLine from './HistoryUsageLine';
-import UsageGauge from '../AssetOverView/UsageGauge';
-import { OpenSocket, CloseSocket } from '../../utils/WebSocket';
-import { sockMsgType } from '../../global/enumeration/SockMsgType'
-import { GetMainServerRootUrl, GetAgentRootUrl } from '../../global/environment'
+import { Card, Col, Row, Skeleton } from 'antd';
+import { inject, observer } from 'mobx-react';
+import PropTypes from 'prop-types';
+import React from 'react';
+import { sockMsgType } from '../../global/enumeration/SockMsgType';
 import RestReq from '../../utils/RestReq';
+import { CloseSocket, OpenSocket } from '../../utils/WebSocket';
+import UsageGauge from '../AssetOverView/UsageGauge';
+import { renderAssetInfo } from './AssetInfo';
+import HistoryUsageLine from './HistoryUsageLine';
 
-const Option = Select.Option;
-const Panel = Collapse.Panel;
-const { TabPane } = Tabs;
 
 let socket = null;
 

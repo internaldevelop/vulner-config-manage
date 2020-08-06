@@ -84,8 +84,8 @@ class SourceCodeView extends React.Component {
                 maskClosable={false}
                 destroyOnClose={true}
                 visible={true}
-                onOk={this.handleOk}
-                onCancel={this.handleCancel}
+                onOk={this.handleOk.bind(this)}
+                onCancel={this.handleCancel.bind(this)}
             >
                 <form style={{ width: '100%', height: 400 }}>
                     <Typography variant="subtitle1" style={{ marginTop: 5 }}>{'组件名称：' + this.props.compileName}</Typography>

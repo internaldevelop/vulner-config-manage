@@ -1,7 +1,6 @@
 import { NavLink as Link } from 'react-router-dom'
 import { withStyles } from '@material-ui/core/styles';
-import Typography from '@material-ui/core/Typography';
-import { Icon, List, Drawer, Card, Col, Row, Skeleton, Tooltip } from 'antd';
+import { message, Icon, List, Drawer, Card, Col, Row, Skeleton, Tooltip } from 'antd';
 import { inject, observer } from 'mobx-react';
 import React from 'react';
 import { DeepClone } from '../../utils/ObjUtils';
@@ -58,7 +57,7 @@ class FirmwarePackageView extends React.Component {
         super(props);
         this.state = {
             pageSize: DEFAULT_PAGE_SIZE,
-            columns: Column,
+            //columns: Column,
             scrollWidth: 1000,        // 表格的 scrollWidth
             scrollHeight: 400,      // 表格的 scrollHeight
             packageList: [],
@@ -108,7 +107,7 @@ class FirmwarePackageView extends React.Component {
         RestReq.asyncGet(this.getAllTasksCB, '/firmware-analyze/fw_analyze/task/query_all');
     }
 
-    getAllPackages = () => {//'/firmware-analyze/fw_analyze/pack/all'
+    getAllPackages = () => {
         RestReq.asyncGet(this.getAllPackagesCB, '/firmware-analyze/fw_analyze/pack/all');
     }
 
@@ -182,7 +181,7 @@ class FirmwarePackageView extends React.Component {
         this.getAllTasks();
     };
 
-    onCloseDownloadFWDrawer = () => {
+    onCloseDrawer = () => {
         this.setState({
             taskManageVisible: false,
         });
@@ -190,9 +189,22 @@ class FirmwarePackageView extends React.Component {
 
     getExtra() {
         return (
-            <a style={{ color: '#FF4500' }} onClick={this.showDownloadFWDrawer.bind(this)}>任务执行列表</a>
+            <a style={{ color: '#FF4500' }} onClick={this.showDownloadFWDrawer.bind(this)}>任务进度列表</a>
         );
     }
+
+    generateReportCB = (data) => {
+        if (data.code !== 'ERROR_OK') {
+            message.info("生成报告失败！");
+            return;
+        } else {
+            message.info("已经生成报告！");
+        }
+    }
+
+    generateReport = (item) => (event) => {
+        RestReq.asyncGet(this.generateReportCB, '/firmware-analyze/report/pdf/create_report', { pack_id: item.pack_id });
+    };
 
     showDetailFWInfo = (item) => (event) => {
         this.setState({ selectFWItem: item, detailFWInfoPreview: true });
@@ -227,8 +239,10 @@ class FirmwarePackageView extends React.Component {
                                         <Col span={20}>{item.name}</Col>
                                         <Col span={4}>
                                             {/* <a onClick={this.showDetailFWInfo(item).bind(this)}>固件分析详情</a> */}
-                                            <Tooltip placement="top" title="固件分析详情">
-                                                <a style={{ color: '#880e4f' }} onClick={this.showDetailFWInfo(item).bind(this)}><Icon type="plus-circle-o" /></a>
+                                            {/* <Tooltip placement="top" title="固件分析详情"> */}
+                                            <Tooltip placement="top" title="生成报告">
+                                                {/* <a style={{ color: '#880e4f' }} onClick={this.showDetailFWInfo(item).bind(this)}><Icon type="plus-circle-o" /></a> */}
+                                                <a style={{ color: 'red' }} onClick={this.generateReport(item).bind(this)}><Icon type="bell" /></a>
                                             </Tooltip>
                                         </Col>
                                     </Row>
@@ -236,30 +250,27 @@ class FirmwarePackageView extends React.Component {
                                         <Row>
                                             <Col className={classes.fileGutterBox} align="left">
                                                 <Row>
-                                                    <Col span={12}>
+                                                    {/* <Col span={12}>
                                                         {"组件数 " + 3}
-                                                    </Col>
-                                                    <Col span={12}>
+                                                    </Col> */}
+                                                    <Col>
                                                         {"可执行文件数 " + item.exeFileNum}
                                                     </Col>
                                                 </Row>
                                                 <Row>
-                                                    <Col span={12}>
-                                                        {"ARM 架构"}
-                                                    </Col>
-                                                    <Col span={12}>
-                                                        {"系统镜像文件数 " + item.systemMirrorNum}
-                                                    </Col>
-                                                </Row>
-                                                <Row>
-                                                    <Col span={12}>
-                                                        {"YAFFS 文件系统"}
-                                                    </Col>
-                                                    <Col span={12}>
-                                                        {"文件系统镜像数 " + item.fileMirrorNum}
+                                                    <Col>
+                                                        {"架构 " + item.arch}
                                                     </Col>
                                                     {/* <Col span={12}>
-                                                        {"固件分析已完成 " }
+                                                        {"系统镜像文件数 " + item.systemMirrorNum}
+                                                    </Col> */}
+                                                </Row>
+                                                <Row>
+                                                    <Col>
+                                                        {"文件系统 " + item.filesystem}
+                                                    </Col>
+                                                    {/* <Col span={12}>
+                                                        {"文件系统镜像数 " + item.fileMirrorNum}
                                                     </Col> */}
                                                 </Row>
                                             </Col>
@@ -274,7 +285,7 @@ class FirmwarePackageView extends React.Component {
                         placement="right"
                         width={400}
                         closable={false}
-                        onClose={this.onCloseDownloadFWDrawer}
+                        onClose={this.onCloseDrawer}
                         visible={this.state.taskManageVisible}
                     >
                         <List

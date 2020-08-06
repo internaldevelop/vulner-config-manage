@@ -9,13 +9,11 @@ export const columns = [
     render: content => <EllipsisText content={content} width={150}/>,
   },
     {
-    title: '固件编号', width: 200, dataIndex: 'firmware_id', key: 'firmware_id',
-    //sorter: (a, b) => a.firmware_id - b.firmware_id,
+    title: '固件编号', width: 200, dataIndex: 'pack_id', key: 'pack_id',
     render: content => <EllipsisText content={content} width={200}/>,
   },
   {
-    title: '固件名称', width: 200, dataIndex: 'fw_file_name', 
-    //sorter: (a, b) => a.fw_file_name.localeCompare(b.fw_file_name, "zh"),
+    title: '固件名称', width: 200, dataIndex: 'name', 
     render: content => <EllipsisText content={content} width={200}/>,
   },
   {

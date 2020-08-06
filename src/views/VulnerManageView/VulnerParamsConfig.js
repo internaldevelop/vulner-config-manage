@@ -192,34 +192,34 @@ class VulnerParamsConfig extends React.Component {
                 maskClosable={false}
                 destroyOnClose={true}
                 visible={true}
-                onOk={this.handleOk}
-                onCancel={this.handleCancel}
+                onOk={this.handleOk.bind(this)}
+                onCancel={this.handleCancel.bind(this)}
             >
                 <form>
                     <TextField required fullWidth autoFocus id="title" label="漏洞名称" defaultValue={title}
-                        variant="outlined" margin="normal" onChange={this.handleVulnerTitleChange}
+                        variant="outlined" margin="normal" onChange={this.handleVulnerTitleChange.bind(this)}
                     />
                     <Row>
                         <Col span={11}>{/*"products":"openssl:1.0.0 1.0.2,chanpin:2.0" */}
                             <TextField required fullWidth id="products" label="产品类型" defaultValue={products}
-                                variant="outlined" margin="normal" onChange={this.handleProductsChange}
+                                variant="outlined" margin="normal" onChange={this.handleProductsChange.bind(this)}
                             />
                         </Col>
                         <Col span={11} offset={2}>
                             <TextField required fullWidth id="discovererName" label="厂商" defaultValue={discovererName}
-                                variant="outlined" margin="normal" onChange={this.handleDiscovererNameChange}
+                                variant="outlined" margin="normal" onChange={this.handleDiscovererNameChange.bind(this)}
                             />
                         </Col>
                     </Row>
                     <Row>
                         <Col span={11}>
                             <TextField required fullWidth id="type" label="类型" defaultValue={type}
-                                variant="outlined" margin="normal" onChange={this.handleTypeChange}
+                                variant="outlined" margin="normal" onChange={this.handleTypeChange.bind(this)}
                             />
                         </Col>
                         <Col span={11} offset={2}>
                             <TextField required fullWidth id="edb_id" label="漏洞编号" defaultValue={edb_id}
-                                variant="outlined" margin="normal" onChange={this.handleEdbIDChange}
+                                variant="outlined" margin="normal" onChange={this.handleEdbIDChange.bind(this)}
                             />
                         </Col>
                     </Row>
@@ -229,7 +229,7 @@ class VulnerParamsConfig extends React.Component {
                                 <InputLabel id="select-outlined-label">危害等级</InputLabel>
                                 <Select
                                     value={serverity}
-                                    onChange={this.handleServerityChange}
+                                    onChange={this.handleServerityChange.bind(this)}
                                     label="serverity"
                                 >
                                     <MenuItem value="高">高</MenuItem>
@@ -240,7 +240,7 @@ class VulnerParamsConfig extends React.Component {
                         </Col>
                         <Col span={11} offset={2}>
                             <TextField required fullWidth id="version" label="固件版本" defaultValue={version}
-                                variant="outlined" margin="normal" onChange={this.handleVersionChange}
+                                variant="outlined" margin="normal" onChange={this.handleVersionChange.bind(this)}
                             />
                         </Col>
                     </Row>

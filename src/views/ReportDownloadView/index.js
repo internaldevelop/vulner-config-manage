@@ -17,32 +17,32 @@ const styles = theme => ({
 
 @inject('userStore')
 @observer
-class LogDownloadView extends React.Component {
+class ReportDownloadView extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            logFiles: [],
+            reportFiles: [],
             selectRowIndex: 0,
             columns: Column(),
             selectedRowKeys: [],
         }
-        this.getAllLogFiles();
+        this.getAllReportFiles();
     }
 
-    getAllLogFilesCB = (data) => {
+    getAllReportFilesCB = (data) => {
         if (data.code !== 'ERROR_OK' || data.payload === undefined)
             return;
-        let logFiles = data.payload.map((file, index) => {
+        let reportFiles = data.payload.map((file, index) => {
             let item = DeepClone(file);
             item.index = index + 1;
             item.key = index + 1;
             return item;
         });
-        this.setState({ logFiles, totalResult: data.payload.totalResults });
+        this.setState({ reportFiles, totalResult: data.payload.totalResults });
     }
 
-    getAllLogFiles = () => {
-        RestReq.asyncGet(this.getAllLogFilesCB, '/system-log/sys_log/get-backups', {}, { token: false });
+    getAllReportFiles = () => {
+        RestReq.asyncGet(this.getAllReportFilesCB, '/firmware-analyze/report/pdf/get_report_pdf');
     }
 
     setRowClassName = (record) => {
@@ -58,17 +58,17 @@ class LogDownloadView extends React.Component {
     handlePageChange = (currentPage, pageSize) => {
     }
 
-    getLogItem = () => {
-        const { selectRowIndex, logFiles } = this.state;
-        return logFiles[selectRowIndex - 1];
+    getReportItem = () => {
+        const { selectRowIndex, reportFiles } = this.state;
+        return reportFiles[selectRowIndex - 1];
     }
 
-    downloadLog = () => {
+    downloadReport = () => {
         if (this.state.selectRowIndex < 0) {
-            message.info("请先选择一个文件进行下载！");
+            message.info("请选择一个报告进行下载！");
             return;
         }
-        window.location.href = GetMainServerRootUrl() + '/system-log/sys_log/download-log?uuid=' + this.getLogItem().uuid + '&access_token=' + RestReq._getAccessToken();
+        window.location.href = GetMainServerRootUrl() + '/firmware-analyze/report/pdf/download_report?report_id=' + this.getReportItem().report_id + '&access_token=' + RestReq._getAccessToken();
     }
 
     onSelectChange = selectedRowKeys => {
@@ -78,7 +78,7 @@ class LogDownloadView extends React.Component {
 
     render() {
         const { classes } = this.props;
-        const { selectedRowKeys, columns, logFiles } = this.state;
+        const { selectedRowKeys, columns, reportFiles } = this.state;
         const userStore = this.props.userStore;
         let self = this;
         const rowSelection = {
@@ -89,11 +89,11 @@ class LogDownloadView extends React.Component {
         return (
             <div>
                 <Skeleton loading={!userStore.isNormalUser} active avatar>
-                    <Card title={'日志下载'} style={{ width: '100%', height: '100%' }}>
+                    <Card title={'报告下载'} style={{ width: '100%', height: '100%' }}>
                         <Table
                             //rowSelection={rowSelection}
                             columns={columns}
-                            dataSource={logFiles}
+                            dataSource={reportFiles}
                             rowKey={record => record.uuid}
                             rowClassName={this.setRowClassName}
                             onRow={(record) => {//表格行点击事件
@@ -106,7 +106,7 @@ class LogDownloadView extends React.Component {
                         <br />
                         <br />
                         <div align="center">
-                            <Button type="primary" size="default" onClick={this.downloadLog.bind(this)}><Icon type="download" />日志下载</Button>
+                            <Button type="primary" size="default" onClick={this.downloadReport.bind(this)}><Icon type="download" />报告下载</Button>
                         </div>
                     </Card>
                 </Skeleton>
@@ -115,8 +115,8 @@ class LogDownloadView extends React.Component {
     }
 }
 
-LogDownloadView.propTypes = {
+ReportDownloadView.propTypes = {
     classes: PropTypes.object,
 };
 
-export default withStyles(styles)(LogDownloadView);
+export default withStyles(styles)(ReportDownloadView);

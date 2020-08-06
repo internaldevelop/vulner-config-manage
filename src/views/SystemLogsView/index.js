@@ -1,19 +1,17 @@
 
-import React from 'react'
-import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
-
-import { observer, inject } from 'mobx-react'
-
-import { Modal, Skeleton, Card, Table, Button, message, Upload, Row, Col, Popconfirm, Input } from 'antd'
-import { GetMainViewHeight, GetMainViewMinHeight, GetMainViewMinWidth } from '../../utils/PageUtils'
+import { Button, Card, Col, Icon, Input, message, Popconfirm, Row, Skeleton, Table, Upload } from 'antd';
+import { inject, observer } from 'mobx-react';
+import PropTypes from 'prop-types';
+import React from 'react';
+import * as XLSX from 'xlsx';
 import EllipsisText from '../../components/widgets/EllipsisText';
 import { actionType } from '../../global/enumeration/ActionType';
-import { GetTableColumnFilters } from '../../utils/tools'
-import { DeepClone, DeepCopy } from '../../utils/ObjUtils'
+import { DeepClone, DeepCopy } from '../../utils/ObjUtils';
+import { GetMainViewHeight } from '../../utils/PageUtils';
 import RestReq from '../../utils/RestReq';
-import * as XLSX from 'xlsx';
-import LogParamsConfig from './LogParamsConfig'
+import { GetTableColumnFilters } from '../../utils/tools';
+import LogParamsConfig from './LogParamsConfig';
 
 const styles = theme => ({
     iconButton: {
@@ -25,6 +23,9 @@ const styles = theme => ({
         marginRight: 5,
         marginBottom: 0,
         marginTop: 0,
+    },
+    antInput: {
+        width: 300,
     },
 });
 
@@ -48,6 +49,7 @@ class SystemLogsView extends React.Component {
             selectedRowKeys: [], // Check here to configure the default column
             inputFileNameVisible: false,
             inputFileName: this.getDefaultFileName(),
+            inputValue: '',
         }
         this.getLogFields();
     }
@@ -76,7 +78,7 @@ class SystemLogsView extends React.Component {
                 <Popconfirm title="确定要删除该日志信息吗？" onConfirm={this.handleDel(index).bind(this)} okText="确定" cancelText="取消">
                     <Button className={classes.actionButton} type="danger" size="small">删除</Button>{/**disabled={!this.isCustomizedData(index)} */}
                 </Popconfirm>
-                <Button className={classes.actionButton} type="primary" size="small" onClick={this.handleEditLog(index).bind(this)}>编辑</Button>
+                {/* <Button className={classes.actionButton} type="primary" size="small" onClick={this.handleEditLog(index).bind(this)}>编辑</Button> */}
             </div>
         )
 
@@ -134,9 +136,9 @@ class SystemLogsView extends React.Component {
     }
 
     querySystemLogs = (targetPage, pageSize) => {
-        if (targetPage === undefined) {
+        if (targetPage === undefined || targetPage < 1) {
             targetPage = 1;
-        } 
+        }
         if (pageSize === undefined) {
             pageSize = DEFAULT_PAGE_SIZE;
         }
@@ -230,7 +232,7 @@ class SystemLogsView extends React.Component {
                 tableColumns.push(logColumn);
             } else if (item.is_display === '1' && item.log_field === 'title') {
                 logColumn = {
-                    title: '标题', dataIndex: 'title', width: 80,
+                    title: '标题', dataIndex: 'title', width: 120,
                     // 添加过滤器用于审计
                     filters: GetTableColumnFilters(logs, "title"),
                     filterMultiple: true,
@@ -259,7 +261,7 @@ class SystemLogsView extends React.Component {
         }
         logColumn = {
             title: '',
-            width: 150,
+            width: 100,
             render: () => (
                 <span>
                 </span>
@@ -341,7 +343,7 @@ class SystemLogsView extends React.Component {
 
     /** 处理页面变化（页面跳转/切换/每页记录数变化） */
     handlePageChange = (pagination, filters, sorter) => {
-        if (pagination.current !== this.state.currentPage && filters.title !== undefined) {
+        if (pagination.current !== this.state.currentPage) {//&& filters.title !== undefined
             this.setState({ currentPage: pagination.current, pageSize: pagination.pageSize });
             this.querySystemLogs(pagination.current, pagination.pageSize);
         }
@@ -362,7 +364,7 @@ class SystemLogsView extends React.Component {
         };
 
         const tableProps = {
-            rowSelection: { rowSelection },
+            //rowSelection: { rowSelection },
             columns: columns,
             rowKey: record => record.uuid,
             dataSource: logs,
@@ -487,45 +489,33 @@ class SystemLogsView extends React.Component {
         return 'back' + today;
     }
 
-    getLogActions = () => {
-        return (
-            <span>
-                <Row>
-                    <Col span={8}>
-                        <Upload
-                            name="avatar"
-                            //listType="picture-card"
-                            //className="avatar-uploader"
-                            showUploadList={false}
-                            //action="https://www.mocky.io/v2/5cc8019d300000980a055e76"
-                            beforeUpload={this.beforeUpload}
-                            onChange={this.handleChange}
-                        >
-                            <Button size={'large'} type='primary' style={{ marginRight: 100 }} onClick={this.uploadLogRecords}>日志记录上传</Button>
-                        </Upload>
-                    </Col>
-                    <Col span={8} offset={1}>
-                        <Button size={'large'} type='primary' onClick={this.downloadLogRecords}>日志记录生成</Button>
-                        <Modal
-                            title="请输入文件名称"
-                            visible={this.state.inputFileNameVisible}
-                            onOk={this.handleInputFileNameOk}
-                            onCancel={this.handleInputFileNameCancel}
-                        >
-                            <Input defaultValue={this.state.inputFileName} onChange={this.handleFileNameChange.bind(this)}></Input>
-                        </Modal>
-                    </Col>
-                </Row>
-                {/* <Button size={'large'} type='primary' style={{ marginLeft: '16px' }} onClick={this.uploadLogRecords}>日志记录上传</Button> */}
-            </span>
-        );
+    handleGetInputValue = (event) => {
+        this.setState({
+            inputValue: event.target.value,
+        })
+    }
+
+    getSearch = () => {
+        const { inputValue, currentPage, pageSize } = this.state;
+        if (inputValue === '') {
+            message.info("查询信息不能为空！");
+            return;
+        }
+        let startSet = (currentPage - 1) * pageSize + 1;
+        RestReq.asyncGet(this.querySystemLogsCB, '/system-log/sys_log/search_by_filter', { title: inputValue, offset: startSet, count: pageSize }, { token: false });
+    }
+
+    refresh = () => {
+        const { currentPage, pageSize } = this.state;
+        this.querySystemLogs(currentPage, pageSize);
     }
 
     deleteLogCB = (dataIndex) => (data) => {
-        const { logs } = this.state;
-        // rowIndex 为行索引，第二个参数 1 为一次去除几行
-        logs.splice(dataIndex, 1);
-        this.setState({ logs });
+        // const { logs } = this.state;
+        // // rowIndex 为行索引，第二个参数 1 为一次去除几行
+        // logs.splice(dataIndex, 1);
+        // this.setState({ logs });
+        this.querySystemLogs(this.state.currentPage, this.state.pageSize);
     }
 
     handleDel = (rowIndex) => (event) => {
@@ -534,7 +524,7 @@ class SystemLogsView extends React.Component {
 
         // 向后台提交删除该日志
         const { logs } = this.state;
-        //RestReq.asyncGet(this.deleteLogCB(dataIndex), '/fw-bend-server/vuldb/del_vul', { vul_id: vulners[dataIndex].vul_id });
+        RestReq.asyncDelete(this.deleteLogCB(dataIndex), '/system-log/sys_log/delete', { uuid: logs[dataIndex].uuid });
     }
 
     /** 处理编辑操作 */
@@ -547,18 +537,6 @@ class SystemLogsView extends React.Component {
         logStore.setLogProcName('编辑日志参数');
         logStore.initLogItem(logItem);
         this.setState({ recordChangeID: dataIndex, showConfig: true });
-    }
-
-    handleNewLog = (event) => {
-        const logStore = this.props.logStore;
-        logStore.setLogAction(actionType.ACTION_NEW);
-        logStore.setLogProcName(('新建漏洞'));
-        let logItem = {
-            title: '',//新建漏洞
-            customized: 1,
-        };
-        logStore.initLogItem(logItem);
-        this.setState({ showConfig: true });
     }
 
     handleCloseConfig = (isOk, policy) => {
@@ -591,14 +569,70 @@ class SystemLogsView extends React.Component {
     render() {
         const userStore = this.props.userStore;
         const { columns, showConfig, } = this.state;
+        const { classes } = this.props;
+        let actionURL = RestReq._getBaseURL('') + '/system-log-dev/sys_log/import-logs';
+        let self = this;
+
+        const props = {
+            name: 'file',
+            //multiple: true,
+            action: RestReq._getBaseURL('') + '/system-log/sys_log/import-logs',
+            data: {
+                access_token: RestReq._getAccessToken(),
+            },
+            onChange(info) {
+                const { status } = info.file;
+                if (status !== 'uploading') {
+                    console.log(info.file, info.fileList);
+                }
+                if (status === 'done') {
+                    if (info.file.response.code === 'ERROR_OK') {
+                        message.success(`${info.file.name} 日志上传成功。`);
+                        self.querySystemLogs(self.state.currentPage, self.state.pageSize);
+                    } else {
+                        message.success(`${info.file.name} 日志上传失败：` + info.file.response.error);
+                    }
+                } else if (status === 'error') {
+                    message.error(`${info.file.name} 日志上传失败。`);
+                }
+            },
+            progress: {
+                strokeColor: {
+                    '0%': '#108ee9',
+                    '100%': '#87d068',
+                },
+                strokeWidth: 3,
+                format: percent => `${parseFloat(percent.toFixed(2))}%`,
+            },
+            showUploadList: {
+                showDownloadIcon: false,
+                showRemoveIcon: true,
+            },
+        };
+
         return (
             <Skeleton loading={!userStore.isNormalUser} active avatar paragraph={{ rows: 12 }}>
-                <div style={{ minWidth: GetMainViewMinWidth(), minHeight: GetMainViewMinHeight() }}>
-                    <Card title={'操作日志'} extra={this.getLogActions()} style={{ width: '100%', height: '100%' }}
-                    >
-                        <Table {...this.getTableProps()} />
-                    </Card>
-                </div>
+                <Card title={'日志管理'} style={{ width: '100%', height: '100%' }}>
+                    <Row>
+                        <Col span={5} align="left" >
+                            <Input className={classes.antInput} size="large" value={this.state.inputValue} allowClear onChange={this.handleGetInputValue.bind(this)} placeholder="日志标题" />
+                        </Col>
+                        <Col span={2} align="left">
+                            <Button className={classes.iconButton} type="primary" size="large" onClick={this.getSearch.bind(this)} ><Icon type="file-search" />查询</Button>
+                        </Col>
+                        <Col span={2} align="left">
+                            <Button className={classes.iconButton} type="primary" size="large" onClick={this.refresh.bind(this)} ><Icon type="sync" />更新</Button>
+                        </Col>
+                        <Col span={15} align="left">
+                            <Upload {...props}
+                            >
+                                <Button size={'large'} type='primary' onClick={this.uploadLogRecords}>日志记录上传</Button>
+                            </Upload>
+                        </Col>
+                    </Row>
+                    <br />
+                    <Table {...this.getTableProps()} />
+                </Card>
                 {showConfig && <LogParamsConfig actioncb={this.handleCloseConfig} />}
             </Skeleton>
         );
