@@ -22,7 +22,7 @@ class LogDownloadView extends React.Component {
         super(props);
         this.state = {
             logFiles: [],
-            selectRowIndex: 0,
+            selectRowIndex: -1,
             columns: Column(),
             selectedRowKeys: [],
         }

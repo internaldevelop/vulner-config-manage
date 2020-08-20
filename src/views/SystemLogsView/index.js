@@ -1,6 +1,6 @@
 
 import { withStyles } from '@material-ui/core/styles';
-import { Button, Card, Col, Icon, Input, message, Popconfirm, Row, Skeleton, Table, Upload } from 'antd';
+import { Button, Card, Col, Icon, Input, message, Popconfirm, Row, Skeleton, Table, Upload, Spin } from 'antd';
 import { inject, observer } from 'mobx-react';
 import PropTypes from 'prop-types';
 import React from 'react';
@@ -50,6 +50,7 @@ class SystemLogsView extends React.Component {
             inputFileNameVisible: false,
             inputFileName: this.getDefaultFileName(),
             inputValue: '',
+            loading: false,
         }
         this.getLogFields();
     }
@@ -128,7 +129,7 @@ class SystemLogsView extends React.Component {
                 this.getAccountName(item, log.account_info);
                 return item;
             });
-            this.setState({ logs, totalResult: data.payload.total });
+            this.setState({ logs, totalResult: data.payload.total, loading: false });
             this.getTableColumns();
             // 设置操作列的渲染
             this.initActionColumn();
@@ -507,6 +508,7 @@ class SystemLogsView extends React.Component {
 
     refresh = () => {
         const { currentPage, pageSize } = this.state;
+        this.setState({ loading: true });
         this.querySystemLogs(currentPage, pageSize);
     }
 
@@ -631,7 +633,9 @@ class SystemLogsView extends React.Component {
                         </Col>
                     </Row>
                     <br />
-                    <Table {...this.getTableProps()} />
+                    <Spin spinning={this.state.loading}>
+                        <Table {...this.getTableProps()} />
+                    </Spin>
                 </Card>
                 {showConfig && <LogParamsConfig actioncb={this.handleCloseConfig} />}
             </Skeleton>

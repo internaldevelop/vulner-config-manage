@@ -181,7 +181,7 @@ class FeatureExtrationView extends React.Component {
 
     getSearch = (event) => {
         if (this.state.inputValue === undefined || this.state.inputValue === '') {
-            message.info("请输入敏感关键字！");
+            message.info("请输入特征值！");
             return;
         }
         RestReq.asyncGet(this.getSearchCB, '/firmware-analyze/component/async_funcs/get_inverted_fw_data', { index_con: this.state.inputValue });
@@ -271,7 +271,7 @@ class FeatureExtrationView extends React.Component {
                             />
                             <Row style={{ margin: 8 }}>
                                 <Col span={10} align="left">
-                                    <Input className={classes.antInput} size="large" allowClear onChange={this.handleInputValue.bind(this)} placeholder="敏感关键字" />
+                                    <Input className={classes.antInput} size="large" allowClear onChange={this.handleInputValue.bind(this)} placeholder="特征值" />
                                 </Col>
                                 <Col span={3} align="left">
                                     <Button className={classes.iconButton} type="primary" size="large" onClick={this.getSearch.bind(this)} ><Icon type="file-search" />查询</Button>
@@ -288,7 +288,7 @@ class FeatureExtrationView extends React.Component {
                     <Col span={12}>
                         <Card title={'特征信息'} style={{ height: 1200, margin: 8, overflowY: 'auto', }} headStyle={MAntdCard.headerStyle('info-2')}>
                             <Row>
-                                <Col span={16}><Typography variant="subtitle2" style={{ color: 'green' }}>敏感关键字</Typography></Col>
+                                <Col span={16}><Typography variant="subtitle2" style={{ color: 'green' }}>特征值</Typography></Col>
                                 <Col span={4}><Typography variant="subtitle2" style={{ color: 'green' }}>出现频次</Typography></Col>
                                 <Col span={4}><Typography variant="subtitle2" style={{ color: 'green' }}>出现位置</Typography></Col>
                             </Row>

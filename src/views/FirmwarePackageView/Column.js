@@ -6,15 +6,15 @@ export const columns = [
   {
     title: '序号', width: 150, dataIndex: 'index', key: 'key',
     //sorter: (a, b) => a.index - b.index,
-    render: content => <EllipsisText content={content} width={150}/>,
-  },
-    {
-    title: '固件编号', width: 200, dataIndex: 'pack_id', key: 'pack_id',
-    render: content => <EllipsisText content={content} width={200}/>,
+    render: content => <EllipsisText content={content} width={150} />,
   },
   {
-    title: '固件名称', width: 200, dataIndex: 'name', 
-    render: content => <EllipsisText content={content} width={200}/>,
+    title: '固件编号', width: 200, dataIndex: 'pack_id', key: 'pack_id',
+    render: content => <EllipsisText content={content} width={200} />,
+  },
+  {
+    title: '固件名称', width: 200, dataIndex: 'name',
+    render: content => <EllipsisText content={content} width={200} />,
   },
   {
     title: '厂商', width: 200, dataIndex: 'fw_manufacturer',

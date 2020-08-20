@@ -73,8 +73,8 @@ class CompileParamsConfig extends React.Component {
         actionCB(false, {});
     }
 
-    clickTab = (value) => {
-        RestReq.asyncGet(this.getTreeDataCB, '/firmware-analyze/component/async_funcs/list_make', { arch: value, pack_id: this.props.compileID, tree_type: 'antd' });
+    clickTab = (key, event) => {
+        RestReq.asyncGet(this.getTreeDataCB, '/firmware-analyze/component/async_funcs/list_make', { arch: key, arch: 'x86', pack_id: this.props.compileID, tree_type: 'antd' });
     }
 
     render() {
@@ -95,7 +95,7 @@ class CompileParamsConfig extends React.Component {
                     <Typography variant="subtitle1" style={{ marginTop: 5 }}>{'组件名称：' + this.props.compileName}</Typography>
                     <Row>
                         <Col>
-                            <Tabs defaultActiveKey="x86" onTabClick={this.clickTab} >
+                            <Tabs defaultActiveKey="x86" onTabClick={this.clickTab.bind(this)} >
                                 <TabPane tab="ARM" key="arm">
                                     <div id='armTree' className={classes.fileTreeContainer}>
                                         <Tree

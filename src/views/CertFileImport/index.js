@@ -111,7 +111,7 @@ class CertFileImport extends React.Component {
         return (
             <div>
                 <Skeleton loading={!userStore.isAdminUser} active avatar>
-                    <Card title="授权文件导入">
+                    <Card title="授权文件导入" style={{ marginLeft: 100, width: '80%' }}>
                         <Row>
                             <Col span={10}>
                                 <div>

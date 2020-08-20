@@ -242,7 +242,7 @@ class FirmwarePackageView extends React.Component {
                                             {/* <Tooltip placement="top" title="固件分析详情"> */}
                                             <Tooltip placement="top" title="生成报告">
                                                 {/* <a style={{ color: '#880e4f' }} onClick={this.showDetailFWInfo(item).bind(this)}><Icon type="plus-circle-o" /></a> */}
-                                                <a style={{ color: 'red' }} onClick={this.generateReport(item).bind(this)}><Icon type="bell" /></a>
+                                                <a style={{ color: 'white' }} onClick={this.generateReport(item).bind(this)}><Icon type="file" /></a>
                                             </Tooltip>
                                         </Col>
                                     </Row>
@@ -250,11 +250,19 @@ class FirmwarePackageView extends React.Component {
                                         <Row>
                                             <Col className={classes.fileGutterBox} align="left">
                                                 <Row>
-                                                    {/* <Col span={12}>
-                                                        {"组件数 " + 3}
-                                                    </Col> */}
-                                                    <Col>
+                                                    <Col span={12}>
+                                                        {"版本 " + 'test_1.0.1'}
+                                                    </Col>
+                                                    <Col span={12} align={'right'}>
                                                         {"可执行文件数 " + item.exeFileNum}
+                                                    </Col>
+                                                </Row>
+                                                <Row>
+                                                    <Col span={14}>
+                                                        {"文件系统 " + item.filesystem}
+                                                    </Col>
+                                                    <Col span={10} align={'right'}>
+                                                        {"分析" + '已完成'}
                                                     </Col>
                                                 </Row>
                                                 <Row>
@@ -263,14 +271,6 @@ class FirmwarePackageView extends React.Component {
                                                     </Col>
                                                     {/* <Col span={12}>
                                                         {"系统镜像文件数 " + item.systemMirrorNum}
-                                                    </Col> */}
-                                                </Row>
-                                                <Row>
-                                                    <Col>
-                                                        {"文件系统 " + item.filesystem}
-                                                    </Col>
-                                                    {/* <Col span={12}>
-                                                        {"文件系统镜像数 " + item.fileMirrorNum}
                                                     </Col> */}
                                                 </Row>
                                             </Col>

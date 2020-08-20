@@ -6,7 +6,7 @@ export function columns() {
   let colsList = [
     { title: '序号', width: 60, dataIndex: 'index' },
     { title: '组件名称', width: 200, dataIndex: 'file_name', myNoWrap: true, mySort: true },
-    { title: '组件版本', width: 120, dataIndex: 'version', myNoWrap: true, mySort: true },
+    { title: '版本', width: 120, dataIndex: 'version', myNoWrap: true, mySort: true },
     { title: '固件名称', width: 150, dataIndex: 'fw_name', myNoWrap: true, mySort: true },
     { title: '文件路径', width: 200, dataIndex: 'file_path', myNoWrap: true, mySort: true },
     { title: '倒排索引', width: 150, dataIndex: 'inverted', myNoWrap: true, mySort: true },

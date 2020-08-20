@@ -22,7 +22,7 @@ class ReportDownloadView extends React.Component {
         super(props);
         this.state = {
             reportFiles: [],
-            selectRowIndex: 0,
+            selectRowIndex: -1,
             columns: Column(),
             selectedRowKeys: [],
         }

@@ -82,6 +82,7 @@ class ComponentConnectView extends React.Component {
 
         columns[columns.length - 1].render = (text, record, index) => (
             <div>
+                <Button className={classes.actionButton} type="primary" size="small" onClick={this.handleAutoConnect(index).bind(this)}>自动关联</Button>
                 <Button className={classes.actionButton} type="primary" size="small" onClick={this.handleConnect(index).bind(this)}>手动关联</Button>
             </div>
         )
@@ -157,12 +158,19 @@ class ComponentConnectView extends React.Component {
         }
     }
 
-    handleAutoConnect = (event) => {
-        if (this.state.selectRowIndex < 0) {
-            message.info("请先选择一个组件！");
-            return;
-        }
-        RestReq.asyncGet(this.handleAutoConnectCB, '/firmware-analyze/fw_analyze/com/auto_vuler_association', { pack_id: this.getComponentItem().pack_id });
+    // handleAutoConnect = (event) => {
+    //     if (this.state.selectRowIndex < 0) {
+    //         message.info("请先选择一个组件！");
+    //         return;
+    //     }
+    //     RestReq.asyncGet(this.handleAutoConnectCB, '/firmware-analyze/fw_analyze/com/auto_vuler_association', { pack_id: this.getComponentItem().pack_id });
+    // };
+
+    handleAutoConnect = (rowIndex) => (event) => {
+        // 从行索引转换成实际的数据索引
+        let dataIndex = this.transferDataIndex(rowIndex);
+        const componentItem = this.state.componentsList[dataIndex];
+        RestReq.asyncGet(this.handleAutoConnectCB, '/firmware-analyze/fw_analyze/com/auto_vuler_association', { pack_id: componentItem.pack_id });
     };
 
     handleCloseConfig = (isOk, data) => {
@@ -225,7 +233,7 @@ class ComponentConnectView extends React.Component {
                         pagination={MAntdTable.pagination(self.handlePageChange)}
                     />
                     {showConfig && <ConnectParamsConfig name={this.getComponentItem().file_name} version={this.getComponentItem().version} file_id={this.getComponentItem().file_id} actioncb={this.handleCloseConfig} />}
-                    <Row>
+                    {/* <Row>
                         <Col span={4} align="left">
                             <Input className={classes.antInput} size="large" allowClear onChange={this.handleInputValue.bind(this)} placeholder="组件名称" />
                         </Col>
@@ -233,7 +241,7 @@ class ComponentConnectView extends React.Component {
                             <Button className={classes.iconButton} type="primary" size="large" onClick={this.getSearch.bind(this)} ><Icon type="file-search" />查询</Button>
                         </Col>
                         <Col span={3} align="left"><Button type="primary" size="large" onClick={this.handleAutoConnect.bind(this)}><Icon type="plus-circle-o" />自动关联</Button></Col>
-                    </Row>
+                    </Row> */}
                     <Drawer
                         title="组件关联进度列表"
                         placement="right"

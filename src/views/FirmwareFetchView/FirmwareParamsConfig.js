@@ -83,13 +83,13 @@ class FirmwareParamsConfig extends React.Component {
             // 向后台发送请求，创建一条新的固件记录
         } else if (this.props.firmwareStore.firmwareAction === actionType.ACTION_EDIT) {
             RestReq.asyncPost(this.requestCB('update'), '/firmware-analyze/fw_analyze/pack/edit',
-            { name, manufacturer, model, pack_id });
+                { name, manufacturer, model, pack_id });
         }
     }
 
     checkData() {
         let fw_file_name = document.getElementById('name').value;
-        
+
         if (fw_file_name === null || fw_file_name === '') {
             message.info('固件名称不能为空，请重新输入');
             document.getElementById('fw_file_name').value = '';
@@ -114,12 +114,16 @@ class FirmwareParamsConfig extends React.Component {
         this.props.firmwareStore.setParam("manufacturer", event.target.value);
     }
 
+    handleVersionChange = (event) => {
+        this.props.firmwareStore.setParam("version", event.target.value);
+    }
+
     handleModelChange = (event) => {
         this.props.firmwareStore.setParam("model", event.target.value);
     }
 
     render() {
-        const { name, manufacturer, model } = this.props.firmwareStore.firmwareItem;
+        const { name, manufacturer, model, version } = this.props.firmwareStore.firmwareItem;
         const modalTitle = <Draggable title={this.props.firmwareStore.firmwareProcName} />;
         return (
             <Modal
@@ -132,16 +136,25 @@ class FirmwareParamsConfig extends React.Component {
                 onCancel={this.handleCancel.bind(this)}
             >
                 <form>
-                    <TextField required fullWidth autoFocus id="name" label="固件名称" defaultValue={name}
-                        variant="outlined" margin="normal" onChange={this.handleFirmwareNameChange.bind(this)}
-                    />
+                    <Row>
+                        <Col span={11}>
+                            <TextField required fullWidth autoFocus id="name" label="固件名称" defaultValue={name}
+                                variant="outlined" margin="normal" onChange={this.handleFirmwareNameChange.bind(this)}
+                            />
+                        </Col>
+                        <Col span={11} offset={2}>
+                            <TextField fullWidth id="version" label="版本" defaultValue={version}
+                                variant="outlined" margin="normal" onChange={this.handleVersionChange.bind(this)}
+                            />
+                        </Col>
+                    </Row>
                     <Row>
                         <Col span={11}>
                             <TextField fullWidth id="manufacturer" label="厂商" defaultValue={manufacturer}
                                 variant="outlined" margin="normal" onChange={this.handleManufacturerChange.bind(this)}
                             />
                         </Col>
-                        <Col span={11} offset={1}>
+                        <Col span={11} offset={2}>
                             <TextField fullWidth id="model" label="设备类型" defaultValue={model}
                                 variant="outlined" margin="normal" onChange={this.handleModelChange.bind(this)}
                             />

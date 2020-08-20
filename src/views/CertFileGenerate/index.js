@@ -58,7 +58,7 @@ class CertFileGenerate extends React.Component {
     }
 
     getCertFile = event => {
-        const {selectUserUuid, expireDate, selectRoles}  = this.props.certFileStore.certFileItem;
+        const { selectUserUuid, expireDate, selectRoles } = this.props.certFileStore.certFileItem;
         // 调接口生成授权文件
         if (expireDate === '' || expireDate === undefined) {
             message.info("授权到期日期不能为空");
@@ -81,11 +81,11 @@ class CertFileGenerate extends React.Component {
             <div>
                 <Skeleton loading={!userStore.isAdminUser} active avatar>
                     <Row>
-                        <Col span={20} offset={2}>
-                            <Card title="授权文件生成">
-                                <div>
-                                    <CertFileCard manage={1} />
-                                    {/* <Row>
+                        {/* <Col span={20} offset={2}> */}
+                        <Card title="授权文件生成" style={{ marginLeft: 100, width: '80%' }} >
+                            <div>
+                                <CertFileCard manage={1} />
+                                {/* <Row>
                                         <Col span={4}>
                                             {"请选择用户："}
                                         </Col>
@@ -119,16 +119,16 @@ class CertFileGenerate extends React.Component {
                                             <DatePicker placeholder="选择日期" style={{ width: 200 }} onChange={this.handleDateChange} />
                                         </Col>
                                     </Row>*/}
-                                    <br />
-                                    <br />
-                                    <Row>
-                                        <Col span={4} offset={5}>
-                                            <Button type="primary" size="large" onClick={this.getCertFile.bind(this)}><Icon type="export" />授权文件生成</Button>
-                                        </Col>
-                                    </Row>
-                                </div>
-                            </Card>
-                        </Col>
+                                <br />
+                                <br />
+                                <Row>
+                                    <Col span={4} offset={5}>
+                                        <Button type="primary" size="large" onClick={this.getCertFile.bind(this)}><Icon type="export" />授权文件生成</Button>
+                                    </Col>
+                                </Row>
+                            </div>
+                        </Card>
+                        {/* </Col> */}
                     </Row>
                 </Skeleton>
             </div>

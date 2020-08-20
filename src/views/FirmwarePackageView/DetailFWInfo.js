@@ -33,7 +33,7 @@ class DetailFWInfo extends React.Component {
     render() {
         return (
             <Modal
-                title={'固件分析详情'}
+                title={'可执行文件信息'}
                 style={{ top: 30, minWidth: 800 }}
                 maskClosable={false}
                 destroyOnClose={true}

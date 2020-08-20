@@ -294,8 +294,8 @@ class ComponentCompileView extends React.Component {
                                 <Col span={3} style={{ marginTop: 10 }}>
                                     <Typography variant="paragraph">编译参数：</Typography>
                                 </Col>
-                                <Col span={6}>
-                                    <Select size='large' placeholder='选择编译参数' defaultValue='x86' style={{ width: 200 }} onChange={this.handlePropChange.bind(this)}>
+                                <Col span={4}>
+                                    <Select size='large' placeholder='选择编译参数' defaultValue='x86' style={{ width: 150 }} onChange={this.handlePropChange.bind(this)}>
                                         <Option value="x86">X86</Option>
                                         <Option value="arm">ARM</Option>
                                         <Option value="mtps">MTPS</Option>
