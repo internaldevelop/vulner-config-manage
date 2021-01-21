@@ -82,7 +82,7 @@
     "sass-loader": "7.1.0",
     "screenfull": "^4.0.1",
     "serv": "^0.2.4",
-    "socket.io": "^2.2.0",
+    "socket.io": "^2.4.0",
     "stomp-client": "^0.9.0",
     "style-loader": "0.23.1",
     "terser-webpack-plugin": "1.2.2",
